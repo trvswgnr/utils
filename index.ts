@@ -20,6 +20,6 @@
  * @param input - The value to be cast, of type `unknown`.
  * @returns The input value cast to type `T`.
  */
-function cast<T = never>(input: unknown): T {
+export function cast<T = never>(input: unknown): T {
   return input as T
 }
