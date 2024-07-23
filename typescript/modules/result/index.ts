@@ -1,10 +1,8 @@
+type IsAny<T> = 0 extends 1 & T ? true : false;
+
 type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
 
-type Ok<T> = T extends Error
-    ? never
-    : (0 extends 1 & T ? true : false) extends true
-    ? never
-    : T;
+type Ok<T> = T extends Error ? never : IsAny<T> extends true ? never : T;
 
 type Err<E extends Error> = E & Error;
 
