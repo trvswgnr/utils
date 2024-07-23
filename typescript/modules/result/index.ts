@@ -1,11 +1,17 @@
-type IsAny<T> = 0 extends 1 & T ? true : false;
+type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
 
-type Ok<T> = T extends Error ? never : IsAny<T> extends true ? never : T;
+type Ok<T> = T extends Error
+    ? never
+    : (0 extends 1 & T ? true : false) extends true
+    ? never
+    : T;
+
+type Err<E extends Error> = E & Error;
+
 function Ok<T>(value: T): Ok<T> {
     return value as Ok<T>;
 }
 
-type Err<E extends Error> = E & Error;
 function Err(e: unknown): Err<Error> {
     return Err.from(e);
 }
@@ -69,8 +75,6 @@ module Err {
         };
     }
 }
-
-type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
 
 /**
  * Result is a type that represents the result of a function.
