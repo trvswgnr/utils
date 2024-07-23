@@ -22,6 +22,8 @@ async function publish() {
     jsrJson.version = newVersion;
     pkgJson.version = newVersion;
 
+    await checkGitState();
+
     await runAllCommandsSync([
         $`bun run build`,
         writeJson(jsrJsonPath, jsrJson),
@@ -57,5 +59,24 @@ async function runAllCommandsSync(promises: Promise<any>[]) {
         } catch (e) {
             throw e;
         }
+    }
+}
+
+/**
+ * checks if there are any uncommitted changes in the git repository. if there
+ * are, it will throw an error. also checks if the current branch is the main
+ * branch.
+ */
+async function checkGitState() {
+    const branch = await $`git branch --show-current`.text();
+    if (branch.trim() !== "main") {
+        console.error("not on main branch, aborting publish");
+        process.exit(1);
+    }
+
+    const status = await $`git status --porcelain`.text();
+    if (status.trim()) {
+        console.error("there are uncommitted changes, aborting publish");
+        process.exit(1);
     }
 }

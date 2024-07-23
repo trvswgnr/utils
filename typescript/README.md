@@ -1,17 +1,16 @@
-# typescript-utils
+# @travvy/utils
 
-this is the workspace for typescript utils, it uses [**Bun**](https://bun.sh) as the
-package manager, which supports workspaces via the "workspace" property in
+this is a collection of typescript utils, it uses [**Bun**](https://bun.sh) as
+the package manager, which supports workspaces via the "workspace" property in
 package.json.
 
 ## developing
 
-to install dependencies across all packages:
-
-make sure you are in the workspace root directory and run:
+to install dependencies, make sure you are in the project root directory and
+run:
 
 ```bash
-bun install
+bun i
 ```
 
 to clean all node_modules and bun.lockb in the workspace and all packages:
@@ -20,39 +19,22 @@ to clean all node_modules and bun.lockb in the workspace and all packages:
 bun run clean
 ```
 
-to create a new package:
+to create a new module:
 
 ```bash
-bun run new <package-name>
+bun run new <module-name>
 ```
 
-## publishing packages
+## publishing
 
-packages are published to the [jsr registry](https://jsr.io).
+this project is published to [NPM](https://www.npmjs.com) and
+[jsr](https://jsr.io).
 
-to publish an individual package (recommended):
+to publish a new version, make sure you are in the project root directory and
+run:
 
-```sh
-bun run publish <package-name>
+```bash
+bun run release
 ```
 
-to publish all packages (not recommended), from the workspace root directory run:
-
-```sh
-bun run publish
-```
-
-or from the package directory run:
-
-```sh
-bunx jsr publish
-```
-
-**note**: it's probably not a good idea to publish packages from the workspace
-root directory, as it will publish all packages in the workspace. instead,
-publish from the package directory, or use the `bun run publish <package-name>`
-command from the workspace root directory.
-
-**note**: do not create new git repositories for packages. everything is tracked
-via the main repository. instead, create a new branch and make your changes
-there.
+**note**: make sure you are on the main branch and have no uncommitted changes.
