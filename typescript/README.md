@@ -1,8 +1,7 @@
 # @travvy/utils
 
 this is a collection of typescript utils, it uses [**Bun**](https://bun.sh) as
-the package manager, which supports workspaces via the "workspace" property in
-package.json.
+the package manager, tests, and as the runtime for utility scripts.
 
 ## developing
 
