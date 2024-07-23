@@ -1,5 +1,7 @@
 import path from "node:path";
-import fs from "node:fs/promises";
+import fs from "node:fs";
+
+export const PACKAGE_NAME = "@travvy/utils";
 
 /**
  * finds the bun workspace root directory
@@ -9,23 +11,43 @@ import fs from "node:fs/promises";
  * doesn't then it will continue to look for a package.json file in the parent
  * directories until it finds the workspace root.
  */
-export async function findWorkspaceRootFrom(cwd: string) {
+export function findProjectRootFrom(cwd: string) {
     const filePath = path.join(cwd, "package.json");
-    const exists = await fs.exists(filePath);
+    const exists = fs.existsSync(filePath);
     const parentDir = path.join(cwd, "..");
 
     if (!exists) {
-        return findWorkspaceRootFrom(parentDir);
+        return findProjectRootFrom(parentDir);
     }
 
-    const pkgRaw = await fs.readFile(filePath, "utf8");
+    const pkgRaw = fs.readFileSync(filePath, "utf8");
     const pkg = JSON.parse(pkgRaw);
 
-    if (pkg.workspaces) {
+    if (pkg.name === PACKAGE_NAME) {
         return cwd;
     }
 
-    return findWorkspaceRootFrom(parentDir);
+    return findProjectRootFrom(parentDir);
+}
+
+export function joinPaths(...paths: string[]) {
+    return path.join(...paths);
+}
+
+export function pathFromRoot(...paths: string[]) {
+    const root = findProjectRootFrom(process.cwd());
+    return joinPaths(root, ...paths);
+}
+
+export function mkdir(dirpath: string) {
+    if (!fs.existsSync(dirpath)) {
+        return fs.mkdirSync(dirpath, { recursive: true });
+    }
+    return undefined;
+}
+
+export function readdir(dirpath: string) {
+    return fs.readdirSync(dirpath, { withFileTypes: true });
 }
 
 export type JsonValue =
@@ -42,6 +64,10 @@ export async function writeJson<V extends JsonValue>(
     value: V,
 ): Promise<number> {
     return await Bun.write(path, JSON.stringify(value, null, 4) + "\n");
+}
+
+export async function writeText(path: string, text: string) {
+    return await Bun.write(path, text);
 }
 
 export async function readJson<V extends JsonValue>(
@@ -68,3 +94,29 @@ export async function getConfirmation(message: string): Promise<boolean> {
     }
     throw new Error("no confirmation received");
 }
+
+export type TsUpConfig = {
+    format: string[];
+    entry: Record<string, string>;
+    outDir: string;
+    dts: boolean;
+    sourcemap: boolean;
+    clean: boolean;
+};
+
+export type PackageJson = {
+    name: string;
+    version: string;
+    main: string;
+    type: string;
+    exports: Record<string, { import: string; require: string }>;
+    files: string[];
+    scripts: Record<string, string>;
+    devDependencies: Record<string, string>;
+};
+
+export type JsrJson = {
+    name: string;
+    version: string;
+    exports: Record<string, string>;
+};

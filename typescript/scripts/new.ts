@@ -1,75 +1,59 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import { findWorkspaceRootFrom } from "./utils";
+import {
+    joinPaths,
+    mkdir,
+    pathFromRoot,
+    readJson,
+    writeJson,
+    writeText,
+    type JsrJson,
+    type PackageJson,
+    type TsUpConfig,
+} from "./utils";
 
-const ROOT_DIR = await findWorkspaceRootFrom(process.cwd());
-
-const packageName = process.argv[2];
-if (!packageName) {
-    console.error("must provide a package name");
+const moduleName = process.argv[2];
+if (!moduleName) {
+    console.error("must provide a module name");
     process.exit(1);
 }
 
-await createNewPackage(ROOT_DIR, packageName).catch(console.error);
+await createNewModule(moduleName);
 
-async function createNewPackage(baseDir: string, name: string) {
-    const packagesDir = path.join(baseDir, "packages");
-    const newPackageDir = path.join(packagesDir, name);
-
-    console.log(`creating new package: ${name}`);
-
-    // create package directory
-    await fs.mkdir(newPackageDir, { recursive: true });
-
-    const readmeContent = `# ${name}
-
-# installation
-
-\`\`\`sh
-bunx jsr add @trav/${name}
-\`\`\`
-`;
-
-    const packageJson = {
-        name: `@trav/${name}`,
-        version: "0.0.1",
-        dependencies: {},
-    };
-
-    const tsconfigJson = {
-        extends: path.relative(
-            newPackageDir,
-            path.join(baseDir, "tsconfig.json"),
-        ),
-    };
-
-    const jsrJson = {
-        name: `@trav/${name}`,
-        version: "0.0.1",
-        exports: {
-            ".": "./index.ts",
-        },
-    };
+async function createNewModule(name: string) {
+    // create the module
+    const moduleDir = pathFromRoot("src", "modules", name);
+    mkdir(moduleDir);
+    const indexFilePath = joinPaths(moduleDir, "index.ts");
+    const mainFilePath = joinPaths(moduleDir, `${name}.ts`);
 
     await Promise.all([
-        fs.writeFile(path.join(newPackageDir, "README.md"), readmeContent),
-        fs.writeFile(
-            path.join(newPackageDir, "index.ts"),
-            "// your code here\n",
-        ),
-        fs.writeFile(
-            path.join(newPackageDir, "package.json"),
-            JSON.stringify(packageJson, null, 4),
-        ),
-        fs.writeFile(
-            path.join(newPackageDir, "tsconfig.json"),
-            JSON.stringify(tsconfigJson, null, 4) + "\n",
-        ),
-        fs.writeFile(
-            path.join(newPackageDir, "jsr.json"),
-            JSON.stringify(jsrJson, null, 4),
-        ),
+        writeText(indexFilePath, `export * from "./${name}";`),
+        writeText(mainFilePath, `export {}`),
+        updatePackageJson(name),
+        updateTsUpConfig(name),
+        updateJsrJson(name),
     ]);
+}
 
-    console.log(`package ${name} created successfully!`);
+async function updatePackageJson(moduleName: string) {
+    const filepath = pathFromRoot("package.json");
+    const packageJson = await readJson<PackageJson>(filepath);
+    packageJson.exports[`./${moduleName}`] = {
+        import: `./dist/${moduleName}.js`,
+        require: `./dist/${moduleName}.cjs`,
+    };
+    await writeJson(filepath, packageJson);
+}
+
+async function updateTsUpConfig(moduleName: string) {
+    const filepath = pathFromRoot("tsup-config.json");
+    const config = await readJson<TsUpConfig>(filepath);
+    config.entry[moduleName] = `src/modules/${moduleName}/index.ts`;
+    await writeJson(filepath, config);
+}
+
+async function updateJsrJson(moduleName: string) {
+    const filepath = pathFromRoot("jsr.json");
+    const jsrJson = await readJson<JsrJson>(filepath);
+    jsrJson.exports[`./${moduleName}`] = `./src/modules/${moduleName}/index.ts`;
+    await writeJson(filepath, jsrJson);
 }

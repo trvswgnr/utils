@@ -1,14 +1,40 @@
 {
-    "name": "@trav/utils",
-    "module": "src/index.ts",
+    "name": "@travvy/utils",
+    "version": "0.0.3",
+    "main": "dist/index.js",
     "type": "module",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./misc": {
+            "import": "./dist/misc.js",
+            "require": "./dist/misc.cjs"
+        },
+        "./result": {
+            "import": "./dist/result.js",
+            "require": "./dist/result.cjs"
+        },
+        "./option": {
+            "import": "./dist/option.js",
+            "require": "./dist/option.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
     "scripts": {
         "clean": "bun ./scripts/clean.ts",
         "new": "bun ./scripts/new.ts",
-        "publish": "bun ./scripts/publish.ts"
+        "publish": "bun ./scripts/publish.ts",
+        "lint": "tsc",
+        "build": "tsup",
+        "test": "bun test"
     },
     "devDependencies": {
         "@types/bun": "^1.1.6",
+        "tsup": "^8.2.2",
         "typescript": "^5.5.3"
     }
 }

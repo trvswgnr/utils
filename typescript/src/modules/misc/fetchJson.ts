@@ -1,4 +1,4 @@
-import type { Result, Ok, Err } from "./result";
+import type { Result, Ok, Err } from "../result/result";
 
 export async function fetchJson<T>(
     url: string | Request | URL,

@@ -1,20 +1,20 @@
-type IsAny<T> = 0 extends 1 & T ? true : false;
+import type { IsAny } from "../../types";
 
-type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
+export { Result, Ok, Err };
 
 type Ok<T> = T extends Error ? never : IsAny<T> extends true ? never : T;
-
-type Err<E extends Error> = E & Error;
 
 function Ok<T>(value: T): Ok<T> {
     return value as Ok<T>;
 }
 
+type Err<E extends Error> = E & Error;
+
 function Err(e: unknown): Err<Error> {
     return Err.from(e);
 }
 
-module Err {
+namespace Err {
     /**
      * Converts any unknown value into an Error object.
      *
@@ -74,6 +74,8 @@ module Err {
     }
 }
 
+type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
+
 /**
  * Result is a type that represents the result of a function.
  *
@@ -89,9 +91,9 @@ module Err {
  * additional runtime overhead and doesn't require extracting the value from the
  * `Ok` or `Err` types.
  */
-module Result {
-    export function ok<T>(v: Ok<T>): Ok<T> {
-        return v;
+namespace Result {
+    export function ok<T>(v: T): Ok<T> {
+        return v as Ok<T>;
     }
 
     export function err<E extends Error>(e: E): Err<E> {
@@ -170,5 +172,3 @@ module Result {
         return isOk(r) ? [r] : [];
     }
 }
-
-export { Result, Ok, Err };

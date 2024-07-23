@@ -1,0 +1,16 @@
+{
+    "format": [
+        "esm",
+        "cjs"
+    ],
+    "entry": {
+        "index": "src/index.ts",
+        "misc": "src/modules/misc/index.ts",
+        "result": "src/modules/result/index.ts",
+        "option": "src/modules/option/index.ts"
+    },
+    "outDir": "dist",
+    "dts": true,
+    "sourcemap": true,
+    "clean": true
+}
