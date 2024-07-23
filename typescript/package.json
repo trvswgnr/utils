@@ -1,0 +1,17 @@
+{
+    "name": "typescript-utils",
+    "private": "true",
+    "module": "index.ts",
+    "type": "module",
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "clean": "bun ./scripts/clean.ts",
+        "new": "bun ./scripts/new.ts"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.1.6",
+        "typescript": "^5.5.3"
+    }
+}
