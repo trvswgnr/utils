@@ -1,6 +1,6 @@
 {
     "name": "@trav/utils",
-    "module": "index.ts",
+    "module": "src/index.ts",
     "type": "module",
     "scripts": {
         "clean": "bun ./scripts/clean.ts",

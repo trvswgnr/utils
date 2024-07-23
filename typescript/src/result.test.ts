@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Result } from ".";
+import { Result } from "./result";
 
 describe("Result", () => {
     it("should be ok for non-error values", () => {

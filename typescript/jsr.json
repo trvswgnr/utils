@@ -2,8 +2,8 @@
     "name": "@trav/utils",
     "version": "0.0.3",
     "exports": {
-        ".": "./index.ts",
-        "./helpers": "./modules/helpers/index.ts",
-        "./result": "./modules/result/index.ts"
+        ".": "./src/index.ts",
+        "./helpers": "./src/helpers/index.ts",
+        "./result": "./src/result/index.ts"
     }
 }
