@@ -28,19 +28,18 @@ bun run new <package-name>
 
 ## publishing packages
 
-packages are published to the [jsr registry](https://jsr.io). to publish all
-packages:
+packages are published to the [jsr registry](https://jsr.io).
 
-from the workspace root directory run:
-
-```sh
-bun run publish
-```
-
-to publish an individual package:
+to publish an individual package (recommended):
 
 ```sh
 bun run publish <package-name>
+```
+
+to publish all packages (not recommended), from the workspace root directory run:
+
+```sh
+bun run publish
 ```
 
 or from the package directory run:
