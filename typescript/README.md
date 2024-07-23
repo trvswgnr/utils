@@ -13,7 +13,7 @@ run:
 bun i
 ```
 
-to clean all node_modules and bun.lockb in the workspace and all packages:
+to clean all node_modules and bun.lockb in the project:
 
 ```bash
 bun run clean
