@@ -1,6 +1,6 @@
 {
     "name": "@trav/utils",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "exports": {
         ".": "./index.ts",
         "./helpers": "./modules/helpers/index.ts",
