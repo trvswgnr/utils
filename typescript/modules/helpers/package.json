@@ -1,6 +1,0 @@
-{
-    "name": "@trav/helpers",
-    "dependencies": {
-        "@trav/result": "npm:@jsr/trav__result"
-    }
-}

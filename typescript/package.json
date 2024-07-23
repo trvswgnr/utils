@@ -1,11 +1,7 @@
 {
-    "name": "typescript-utils",
-    "private": "true",
+    "name": "@trav/utils",
     "module": "index.ts",
     "type": "module",
-    "workspaces": [
-        "packages/*"
-    ],
     "scripts": {
         "clean": "bun ./scripts/clean.ts",
         "new": "bun ./scripts/new.ts",
