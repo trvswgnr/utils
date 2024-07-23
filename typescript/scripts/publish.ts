@@ -22,15 +22,12 @@ async function publishOne(packageName: string) {
     const packageJson = await Bun.file(packageJsonPath).json();
     const jsrJsonPath = path.join(packageDir, "jsr.json");
     const jsrJson = await Bun.file(jsrJsonPath).json();
-    const [major, minor, patch] = packageJson.version.split(".");
+    const [major, minor, patch] = jsrJson.version.split(".");
     const version = `${major}.${minor}.${Number(patch) + 1}`;
     packageJson.version = version;
     jsrJson.version = version;
 
-    await Promise.all([
-        Bun.write(packageJsonPath, JSON.stringify(packageJson, null, 4)),
-        Bun.write(jsrJsonPath, JSON.stringify(jsrJson, null, 4)),
-    ]);
+    await Bun.write(jsrJsonPath, JSON.stringify(jsrJson, null, 4));
 
     await $`cd ${packageDir}`;
     await $`git add . && git commit -m "chore: publish ${packageName}@${version}" && git push`;

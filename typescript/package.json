@@ -8,7 +8,8 @@
     ],
     "scripts": {
         "clean": "bun ./scripts/clean.ts",
-        "new": "bun ./scripts/new.ts"
+        "new": "bun ./scripts/new.ts",
+        "publish": "bun ./scripts/publish.ts"
     },
     "devDependencies": {
         "@types/bun": "^1.1.6",
