@@ -1,5 +1,10 @@
 import { $ } from "bun";
-import { findWorkspaceRootFrom } from "./utils";
+import {
+    findWorkspaceRootFrom,
+    getConfirmation,
+    readJson,
+    writeJson,
+} from "./utils";
 import path from "path";
 import fs from "fs/promises";
 
@@ -19,15 +24,14 @@ async function main() {
 async function publishOne(packageName: string) {
     const packageDir = path.join(ROOT_DIR, "packages", packageName);
     const jsrJsonPath = path.join(packageDir, "jsr.json");
-    const jsrJson = await Bun.file(jsrJsonPath).json();
+    const jsrJson = await readJson<{ version: string }>(jsrJsonPath);
     const [major, minor, patch] = jsrJson.version.split(".");
     const newPatchVersion = Number(patch) + 1;
     const version = `${major}.${minor}.${newPatchVersion}`;
     jsrJson.version = version;
 
-    await Bun.write(jsrJsonPath, JSON.stringify(jsrJson, null, 4));
-
     await runAllCommandsSync([
+        writeJson(jsrJsonPath, jsrJson),
         $`cd ${ROOT_DIR}`,
         $`git add ${jsrJsonPath}`,
         $`git commit -m "chore: publish ${packageName}@${version}"`,
@@ -40,7 +44,7 @@ async function publishOne(packageName: string) {
         const prevVersion = `${major}.${minor}.${Number(patch) - 1}`;
         jsrJson.version = prevVersion;
         await runAllCommandsSync([
-            Bun.write(jsrJsonPath, JSON.stringify(jsrJson, null, 4)),
+            writeJson(jsrJsonPath, jsrJson),
             $`cd ${ROOT_DIR}`,
             // reset to last commit
             $`git reset HEAD~`,
@@ -60,6 +64,14 @@ async function runAllCommandsSync(promises: Promise<any>[]) {
 }
 
 async function publishAll() {
+    const confirmation = await getConfirmation(
+        "Are you sure you want to publish all packages?",
+    );
+    if (!confirmation) {
+        console.log("aborting");
+        return;
+    }
+    console.log("publishing all packages...");
     // get all package dirs
     const packageDirs = await fs.readdir(path.join(ROOT_DIR, "packages"), {
         withFileTypes: true,
@@ -70,5 +82,7 @@ async function publishAll() {
             promises.push(publishOne(packageDir.name));
         }
     }
-    await Promise.all(promises);
+    await Promise.all(promises).then(() => {
+        console.log("all packages published");
+    });
 }

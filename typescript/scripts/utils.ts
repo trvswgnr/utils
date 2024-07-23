@@ -27,3 +27,44 @@ export async function findWorkspaceRootFrom(cwd: string) {
 
     return findWorkspaceRootFrom(parentDir);
 }
+
+export type JsonValue =
+    | string
+    | number
+    | boolean
+    | null
+    | Array<JsonValue>
+    | { [key: string]: JsonValue }
+    | { toJSON(): JsonValue };
+
+export async function writeJson<V extends JsonValue>(
+    path: string,
+    value: V,
+): Promise<number> {
+    return await Bun.write(path, JSON.stringify(value, null, 4) + "\n");
+}
+
+export async function readJson<V extends JsonValue>(
+    path: string,
+    validator?: (value: JsonValue) => value is V,
+): Promise<V> {
+    const value = await Bun.file(path).json();
+    if (validator && !validator(value)) {
+        throw new Error(`Invalid JSON value at ${path}`);
+    }
+    return value;
+}
+
+export async function getConfirmation(message: string): Promise<boolean> {
+    const prompt = message + " (y/n): ";
+    process.stdout.write(prompt);
+    for await (const line of console) {
+        if (line === "y" || line === "yes") {
+            return true;
+        } else if (line === "n" || line === "no") {
+            return false;
+        }
+        process.stdout.write(prompt);
+    }
+    throw new Error("no confirmation received");
+}
