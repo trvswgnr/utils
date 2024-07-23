@@ -1,6 +1,7 @@
 {
     "name": "@trav/helpers",
     "dependencies": {
+        "@trav/bun-test": "workspace:*",
         "@trav/result": "workspace:*"
     }
 }
