@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@trav/bun-test";
+import { describe, expect, it } from "bun:test";
 import { Result } from ".";
 
 describe("Result", () => {
