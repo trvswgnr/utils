@@ -2,8 +2,14 @@
 
 a collection of helper functions
 
-to install dependencies (for development):
+## installation
 
 ```bash
 bunx jsr add @trav/helpers
+```
+
+## usage
+
+```bash
+import { cast } from "@trav/helpers";
 ```
