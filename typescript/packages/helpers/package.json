@@ -1,6 +1,6 @@
 {
     "name": "@trav/helpers",
     "dependencies": {
-        "@trav/result": "workspace:*"
+        "@trav/result": "npm:@jsr/trav__result"
     }
 }
