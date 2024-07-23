@@ -1,15 +1,9 @@
 # helpers
 
-To install dependencies:
+a collection of helper functions
+
+to install dependencies (for development):
 
 ```bash
-bun install
+bunx jsr add @trav/helpers
 ```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.1.20. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.

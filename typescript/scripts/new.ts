@@ -4,14 +4,9 @@ import { findWorkspaceRootFrom } from "./utils";
 
 const ROOT_DIR = await findWorkspaceRootFrom(process.cwd());
 
-if (process.argv.length < 3) {
-    console.error("Please provide a package name");
-    process.exit(1);
-}
-
 const packageName = process.argv[2];
 if (!packageName) {
-    console.error("Please provide a package name");
+    console.error("must provide a package name");
     process.exit(1);
 }
 
@@ -28,10 +23,10 @@ async function createNewPackage(baseDir: string, name: string) {
 
     const readmeContent = `# ${name}
 
-to install dependencies:
+# installation
 
 \`\`\`sh
-bun install
+bunx jsr add @trav/${name}
 \`\`\`
 `;
 
