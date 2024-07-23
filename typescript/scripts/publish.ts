@@ -18,21 +18,45 @@ async function main() {
 
 async function publishOne(packageName: string) {
     const packageDir = path.join(ROOT_DIR, "packages", packageName);
-    const packageJsonPath = path.join(packageDir, "package.json");
-    const packageJson = await Bun.file(packageJsonPath).json();
     const jsrJsonPath = path.join(packageDir, "jsr.json");
     const jsrJson = await Bun.file(jsrJsonPath).json();
     const [major, minor, patch] = jsrJson.version.split(".");
-    const version = `${major}.${minor}.${Number(patch) + 1}`;
-    packageJson.version = version;
+    const newPatchVersion = Number(patch) + 1;
+    const version = `${major}.${minor}.${newPatchVersion}`;
     jsrJson.version = version;
 
     await Bun.write(jsrJsonPath, JSON.stringify(jsrJson, null, 4));
 
-    await $`cd ${packageDir}`;
-    await $`git add . && git commit -m "chore: publish ${packageName}@${version}" && git push`;
-    await $`bunx jsr publish`;
-    await $`cd ${ROOT_DIR}`;
+    await runAllCommandsSync([
+        $`cd ${ROOT_DIR}`,
+        $`git add ${jsrJsonPath}`,
+        $`git commit -m "chore: publish ${packageName}@${version}"`,
+        $`cd ${packageDir}`,
+        $`bunx jsr publish`,
+        $`cd ${ROOT_DIR}`,
+        $`git push`,
+    ]).catch(async () => {
+        console.error("\nerror publishing, rolling back...\n");
+        const prevVersion = `${major}.${minor}.${Number(patch) - 1}`;
+        jsrJson.version = prevVersion;
+        await runAllCommandsSync([
+            Bun.write(jsrJsonPath, JSON.stringify(jsrJson, null, 4)),
+            $`cd ${ROOT_DIR}`,
+            // reset to last commit
+            $`git reset HEAD~`,
+            $`git checkout -- ${jsrJsonPath}`,
+        ]);
+    });
+}
+
+async function runAllCommandsSync(promises: Promise<any>[]) {
+    for (const promise of promises) {
+        try {
+            await promise;
+        } catch (e) {
+            throw e;
+        }
+    }
 }
 
 async function publishAll() {
