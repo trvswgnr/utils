@@ -27,6 +27,7 @@ async function publish() {
     pkgJson.version = newVersion;
 
     await runAllCommandsSync([
+        $`bun run build`,
         writeJson(jsrJsonPath, jsrJson),
         writeJson(pkgJsonPath, pkgJson),
         $`git add ${jsrJsonPath}`,
