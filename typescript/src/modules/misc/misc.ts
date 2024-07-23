@@ -1,4 +1,3 @@
-
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
  *
