@@ -1,3 +1,5 @@
+import { fetchJson as _fetchJson } from "./fetchJson";
+
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
  *
@@ -23,3 +25,5 @@
 export function cast<T = never>(input: unknown): T {
     return input as T;
 }
+
+export const fetchJson = _fetchJson;
