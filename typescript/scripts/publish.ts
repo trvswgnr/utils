@@ -7,11 +7,7 @@ import {
     type PackageJson,
 } from "./utils";
 
-await main();
-
-async function main() {
-    return await publish();
-}
+await publish();
 
 async function publish() {
     const jsrJsonPath = pathFromRoot("jsr.json");
@@ -27,7 +23,6 @@ async function publish() {
     pkgJson.version = newVersion;
 
     await runAllCommandsSync([
-        $`bun run build`,
         writeJson(jsrJsonPath, jsrJson),
         writeJson(pkgJsonPath, pkgJson),
         $`git add ${jsrJsonPath}`,
@@ -37,7 +32,7 @@ async function publish() {
         $`bunx jsr publish`,
         $`git tag v${newVersion}`,
         $`git push origin v${newVersion}`,
-    ]).catch(async () => {
+    ]).catch(async (e) => {
         console.error("\nerror publishing, rolling back...\n");
         const prevVersion = `${major}.${minor}.${Number(newPatchVersion) - 1}`;
 
