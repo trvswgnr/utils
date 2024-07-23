@@ -2,9 +2,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { findWorkspaceRootFrom } from "./utils";
 
-const ROOT_DIR = await findWorkspaceRootFrom(process.cwd());
+await main();
 
-await cleanAll(ROOT_DIR).catch(console.error);
+async function main() {
+    const ROOT_DIR = await findWorkspaceRootFrom(process.cwd());
+    const pkg = process.argv[2];
+    if (!pkg) {
+        return await cleanAll(ROOT_DIR).catch(console.error);
+    }
+
+    const pkgDir = path.join(ROOT_DIR, "packages", pkg);
+    await cleanDir(pkgDir).catch(console.error);
+}
 
 async function cleanAll(baseDir: string) {
     console.log("cleaning workspace root...");

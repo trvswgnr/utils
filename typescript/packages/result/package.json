@@ -1,0 +1,8 @@
+{
+    "name": "@trav/result",
+    "version": "0.0.1",
+    "dependencies": {},
+    "devDependencies": {
+        "@trav/placeholder": "workspace:*"
+    }
+}

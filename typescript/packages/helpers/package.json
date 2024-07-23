@@ -1,4 +1,6 @@
 {
     "name": "@trav/helpers",
-    "dependencies": {}
+    "dependencies": {
+        "@trav/result": "workspace:*"
+    }
 }

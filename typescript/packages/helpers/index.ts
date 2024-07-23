@@ -21,5 +21,5 @@
  * @returns The input value cast to type `T`.
  */
 export function cast<T = never>(input: unknown): T {
-  return input as T
+    return input as T;
 }
