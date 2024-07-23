@@ -1,5 +1,5 @@
-import { describe, it, expect, spyOn } from "@trav/bun-test";
 import { fetchJson } from "./fetchJson";
+import { describe, it, expect, spyOn } from "@trav/bun-test";
 
 class MockResponse {
     static instanceCount = 0;
