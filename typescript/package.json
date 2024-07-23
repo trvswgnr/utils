@@ -27,7 +27,7 @@
     "scripts": {
         "clean": "bun ./scripts/clean.ts",
         "new": "bun ./scripts/new.ts",
-        "publish": "bun ./scripts/publish.ts",
+        "release": "bun ./scripts/publish.ts",
         "lint": "tsc",
         "build": "tsup",
         "test": "bun test"
