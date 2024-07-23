@@ -34,7 +34,8 @@ async function publish() {
         $`npm publish`,
         $`bunx jsr publish`,
         $`git tag v${newVersion}`,
-        $`git push origin v${newVersion}`,
+        $`git push`,
+        $`git push --tags`,
     ]).catch(async (e) => {
         console.error("\nerror publishing, rolling back...\n");
         const prevVersion = `${major}.${minor}.${Number(newPatchVersion) - 1}`;
