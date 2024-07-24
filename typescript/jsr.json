@@ -1,6 +1,6 @@
 {
     "name": "@travvy/utils",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "exports": {
         ".": "./src/index.ts",
         "./misc": "./src/modules/misc/index.ts",
