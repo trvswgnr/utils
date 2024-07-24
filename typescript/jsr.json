@@ -5,6 +5,8 @@
         ".": "./src/index.ts",
         "./misc": "./src/modules/misc/index.ts",
         "./result": "./src/modules/result/index.ts",
-        "./option": "./src/modules/option/index.ts"
+        "./option": "./src/modules/option/index.ts",
+        "./hash": "./src/modules/hash/index.ts",
+        "./benchmark": "./src/modules/benchmark/index.ts"
     }
 }
