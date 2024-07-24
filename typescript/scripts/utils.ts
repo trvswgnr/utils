@@ -30,11 +30,11 @@ export function findProjectRootFrom(cwd: string) {
     return findProjectRootFrom(parentDir);
 }
 
-export function joinPaths(...paths: string[]) {
+export function joinPaths(...paths: Array<string>) {
     return path.join(...paths);
 }
 
-export function pathFromRoot(...paths: string[]) {
+export function pathFromRoot(...paths: Array<string>) {
     const root = findProjectRootFrom(process.cwd());
     return joinPaths(root, ...paths);
 }
@@ -48,6 +48,26 @@ export function mkdir(dirpath: string) {
 
 export function readdir(dirpath: string) {
     return fs.readdirSync(dirpath, { withFileTypes: true });
+}
+
+export function exists(filepath: string) {
+    return fs.existsSync(filepath);
+}
+
+export function rmDir(dirpath: string, force = false) {
+    return fs.rmSync(dirpath, { recursive: true, force });
+}
+
+export function rmFile(filepath: string, force = false) {
+    return fs.rmSync(filepath, { force });
+}
+
+export function assertInProjectRoot() {
+    const root = findProjectRootFrom(process.cwd());
+    if (root !== process.cwd()) {
+        console.error(`Must be run from project root: ${root}`);
+        process.exit(1);
+    }
 }
 
 export type JsonValue =
@@ -87,7 +107,8 @@ export async function getConfirmation(message: string): Promise<boolean> {
     for await (const line of console) {
         if (line === "y" || line === "yes") {
             return true;
-        } else if (line === "n" || line === "no") {
+        }
+        if (line === "n" || line === "no") {
             return false;
         }
         process.stdout.write(prompt);
@@ -95,8 +116,14 @@ export async function getConfirmation(message: string): Promise<boolean> {
     throw new Error("no confirmation received");
 }
 
+export async function exec(cmd: string): Promise<number> {
+    const { exited, exitCode } = Bun.spawn(cmd.split(" "));
+    await exited;
+    return exitCode ?? 69;
+}
+
 export type TsUpConfig = {
-    format: string[];
+    format: Array<string>;
     entry: Record<string, string>;
     outDir: string;
     dts: boolean;
@@ -110,7 +137,7 @@ export type PackageJson = {
     main: string;
     type: string;
     exports: Record<string, { import: string; require: string }>;
-    files: string[];
+    files: Array<string>;
     scripts: Record<string, string>;
     devDependencies: Record<string, string>;
 };
@@ -120,3 +147,17 @@ export type JsrJson = {
     version: string;
     exports: Record<string, string>;
 };
+
+export type Log = Omit<Console, "log">;
+export const Log = console;
+
+export type AnyFn = (...args: never[]) => unknown;
+
+export function exitAfter(x: unknown, exitCode?: number): never;
+export function exitAfter<F extends AnyFn>(fn: F, exitCode?: number): never;
+export function exitAfter(fn: unknown, exitCode = 0): never {
+    if (typeof fn === "function") {
+        fn();
+    }
+    process.exit(exitCode);
+}

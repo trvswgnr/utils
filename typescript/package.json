@@ -23,10 +23,6 @@
         "./hash": {
             "import": "./dist/hash.js",
             "require": "./dist/hash.cjs"
-        },
-        "./benchmark": {
-            "import": "./dist/benchmark.js",
-            "require": "./dist/benchmark.cjs"
         }
     },
     "files": [
@@ -38,7 +34,8 @@
         "release": "bun ./scripts/publish.ts",
         "lint": "tsc",
         "build": "tsup",
-        "test": "bun test"
+        "test": "bun ./scripts/test.ts",
+        "delete": "bun ./scripts/delete.ts"
     },
     "devDependencies": {
         "@types/bun": "^1.1.6",
