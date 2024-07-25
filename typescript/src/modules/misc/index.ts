@@ -38,3 +38,5 @@ export type UInt32 = Branded<number, "UInt32">;
 export function UInt32(n: number): UInt32 {
     return (n >>> 0) as UInt32;
 }
+
+export const BAIL = Symbol("BAIL");

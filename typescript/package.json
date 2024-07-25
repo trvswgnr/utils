@@ -23,6 +23,14 @@
         "./hash": {
             "import": "./dist/hash.js",
             "require": "./dist/hash.cjs"
+        },
+        "./effect": {
+            "import": "./dist/effect.js",
+            "require": "./dist/effect.cjs"
+        },
+        "./either": {
+            "import": "./dist/either.js",
+            "require": "./dist/either.cjs"
         }
     },
     "files": [

@@ -6,6 +6,8 @@
         "./misc": "./src/modules/misc/index.ts",
         "./result": "./src/modules/result/index.ts",
         "./option": "./src/modules/option/index.ts",
-        "./hash": "./src/modules/hash/index.ts"
+        "./hash": "./src/modules/hash/index.ts",
+        "./effect": "./src/modules/effect/index.ts",
+        "./either": "./src/modules/either/index.ts"
     }
 }
