@@ -13,6 +13,8 @@
         "allowImportingTsExtensions": true,
         "verbatimModuleSyntax": true,
         "noEmit": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
 
         // Best practices
         "strict": true,
@@ -23,6 +25,10 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false,
-        "noUncheckedIndexedAccess": true
+        "noUncheckedIndexedAccess": true,
+
+        "paths": {
+            "~/*": ["./src/*"]
+        }
     }
 }

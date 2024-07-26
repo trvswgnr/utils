@@ -51,7 +51,7 @@ function mayFail2(succeed: boolean): Either<string, number> {
     return succeed ? Either.right(20) : Either.left("Failed in mayFail2");
 }
 
-function myFuncSuccess() {
+function myFuncSuccess(): Either<string, number> {
     return run(function* () {
         const a = yield* mayFail1(true);
         const b = yield* mayFail2(true);
@@ -59,7 +59,7 @@ function myFuncSuccess() {
     });
 }
 
-function myFuncFailure() {
+function myFuncFailure(): Either<string, number> {
     return run(function* () {
         const a = yield* mayFail1(false);
         const b = yield* mayFail2(true);

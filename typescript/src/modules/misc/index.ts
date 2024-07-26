@@ -40,3 +40,21 @@ export function UInt32(n: number): UInt32 {
 }
 
 export const BAIL = Symbol("BAIL");
+
+export function staticImplements<T>() {
+    return <U extends T>(constructor: U) => {
+        constructor;
+    };
+}
+
+export function impl<U, C extends new (...args: any[]) => any>(
+    c: C,
+    u: U,
+): new (...args: ConstructorParameters<C>) => InstanceType<C> & U {
+    return class extends c {
+        constructor(...args: any[]) {
+            super(...args);
+            Object.assign(this, u);
+        }
+    };
+}

@@ -31,6 +31,10 @@
         "./either": {
             "import": "./dist/either.js",
             "require": "./dist/either.cjs"
+        },
+        "./fp": {
+            "import": "./dist/fp.js",
+            "require": "./dist/fp.cjs"
         }
     },
     "files": [
