@@ -1,8 +1,4 @@
-type IsNonFnObject<T> = T extends object
-    ? T extends (...args: never[]) => unknown
-        ? false
-        : true
-    : false;
+import type { IsNonFnObject } from "~/types";
 
 export type Identity<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => R

@@ -139,3 +139,9 @@ export type Return<F extends AnyFn> = F extends (...args: any[]) => infer R
     : never;
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
+
+export type IsNonFnObject<T> = T extends object
+    ? T extends (...args: never[]) => unknown
+        ? false
+        : true
+    : false;
