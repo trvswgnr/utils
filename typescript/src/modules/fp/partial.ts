@@ -1,4 +1,4 @@
-import type { AnyFn, Args, Length, ShiftN } from "~/types";
+import type { AnyFn, Args, Length, Params, Return, ShiftN } from "~/types";
 
 /**
  * Partial application of a function
@@ -24,7 +24,7 @@ export namespace PartialApplication {
      */
     export function of<P extends Args, R>(
         fn: (...params: P) => R,
-    ): PartialApplication<P, R> {
+    ): PartiallyApplied<P, R> {
         /**
          * Accumulator function that collects arguments and either calls the
          * original function or returns a new function to collect more arguments.
@@ -44,8 +44,13 @@ export namespace PartialApplication {
 /**
  * Represents a partially applied function
  */
-export type PartialApplication<T extends Args, R> = <A extends Partial<T>>(
-    ...args: A
-) => Length<A> extends Length<T>
+
+export type PartiallyApplied<P extends Args, R> = <T extends Partial<P>>(
+    ...args: T
+) => T["length"] extends P["length"]
     ? R
-    : PartialApplication<ShiftN<T, Length<A>>, R>;
+    : PartiallyApplied<ShiftN<P, Length<T>>, R>;
+
+export type PartialApplication<F> = F extends (...args: infer A) => infer R
+    ? PartiallyApplied<A, R>
+    : never;

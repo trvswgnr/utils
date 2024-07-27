@@ -47,14 +47,21 @@ export function staticImplements<T>() {
     };
 }
 
-export function impl<U, C extends new (...args: any[]) => any>(
+export function implPrototype<U, C extends new (...args: any[]) => any>(
     c: C,
     u: U,
-): new (...args: ConstructorParameters<C>) => InstanceType<C> & U {
-    return class extends c {
+): C & U {
+    return class A extends c {
         constructor(...args: any[]) {
             super(...args);
             Object.assign(this, u);
         }
-    };
+    } as any;
+}
+
+export function implStatic<U, C extends new (...args: any[]) => any>(
+    c: C,
+    u: U,
+): C & U {
+    return Object.assign(c, u);
 }

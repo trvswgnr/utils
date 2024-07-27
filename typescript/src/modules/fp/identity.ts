@@ -13,3 +13,6 @@ export type Identity<T> = T extends (...args: infer A) => infer R
       } & {};
 
 export const id = <T>(value: T): Identity<T> => value as any;
+
+export const ID = Symbol("ID");
+export type ID = typeof ID;
