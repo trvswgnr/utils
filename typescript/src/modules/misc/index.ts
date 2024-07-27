@@ -26,11 +26,6 @@ export function cast<T = never>(input: unknown): T {
     return input as T;
 }
 
-/**
- * returns `true` if `T` is the `any` type, otherwise `false`
- */
-export type IsAny<T> = 0 extends 1 & T ? true : false;
-
 declare const BRAND: unique symbol;
 export type Branded<T, Brand> = T & { [BRAND]: Brand };
 

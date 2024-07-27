@@ -8,11 +8,6 @@ export interface Kind {
      */
     readonly In1: unknown;
     /**
-     * `In2` is contravariant, meaning it can be used for operations that can
-     * accept an input that is wider than the original type
-     */
-    readonly In2: unknown;
-    /**
      * `Out1` is covariant, meaning it can be used for operations that return a
      * result that is narrower than the original type.
      */
@@ -33,24 +28,15 @@ export interface Kind {
  * Represents a higher-kinded type with optional type parameters
  * @template F - The base Kind
  * @template In1 - The first contravariant input type (default: never)
- * @template In2 - The second contravariant input type (default: never)
  * @template Out1 - The first covariant output type (default: never)
  * @template Out2 - The second covariant output type (default: never)
  * @template Target - The invariant target type (default: never)
  */
-export type Type<
-    F extends Kind,
-    In1 = never,
-    In2 = never,
-    Out1 = never,
-    Out2 = never,
-    Target = never,
-> = F extends {
+export type Type<F extends Kind, In1, Out1, Out2, Target> = F extends {
     readonly type: unknown;
 }
     ? (F & {
           readonly In1: In1;
-          readonly In2: In2;
           readonly Out1: Out1;
           readonly Out2: Out2;
           readonly Target: Target;
@@ -58,7 +44,6 @@ export type Type<
     : {
           readonly F: F;
           readonly In1: ContravariantOp<In1>;
-          readonly In2: ContravariantOp<In2>;
           readonly Out1: CovariantOp<Out1>;
           readonly Out2: CovariantOp<Out2>;
           readonly Target: InvariantOp<Target>;
@@ -68,6 +53,7 @@ export type Type<
  * A unique symbol used as a key for the KIND property
  */
 export declare const KIND: unique symbol;
+export type KIND = typeof KIND;
 
 /**
  * Represents a class that can be used with higher-kinded types

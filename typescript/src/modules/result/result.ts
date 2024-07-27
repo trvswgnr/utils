@@ -1,4 +1,4 @@
-import type { IsAny } from "../misc";
+import type { IsAny } from "~/types";
 
 export { Result, Ok, Err };
 

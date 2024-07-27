@@ -1,3 +1,5 @@
+import type * as HKT from "./modules/fp/hkt";
+
 /**
  * A collection of useful type-level utilities
  *
@@ -135,3 +137,5 @@ export type Params<F extends AnyFn> = F extends (...args: infer P) => any
 export type Return<F extends AnyFn> = F extends (...args: any[]) => infer R
     ? R
     : never;
+
+export type IsAny<T> = 0 extends 1 & T ? true : false;
