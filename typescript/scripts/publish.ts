@@ -32,7 +32,7 @@ async function publish() {
         $`git add ${pkgJsonPath}`,
         $`git commit -m "chore: publish v${newVersion}"`,
         $`npm publish`,
-        $`bunx jsr publish`,
+        $`bunx jsr publish --allow-slow-types`,
         $`git tag v${newVersion}`,
         $`git push`,
         $`git push --tags`,
