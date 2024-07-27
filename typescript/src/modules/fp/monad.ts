@@ -2,24 +2,24 @@ import type * as HKT from "./hkt";
 import type { Applicative, BoundApplicative } from "./applicative";
 
 export interface Monad<F extends HKT.Kind> extends Applicative<F> {
-    return: <R, O, E, A>(a: A) => HKT.Type<F, R, O, E, A>;
-    then?: <R, O, E, A, B>(
-        ma: HKT.Type<F, R, O, E, A>,
-        mb: HKT.Type<F, R, O, E, B>,
-    ) => HKT.Type<F, R, O, E, B>;
-    bind: <R, O, E, A, B>(
-        ma: HKT.Type<F, R, O, E, A>,
-        f: (a: A) => HKT.Type<F, R, O, E, B>,
-    ) => HKT.Type<F, R, O, E, B>;
+    return: <In, Out, Target>(a: Target) => HKT.Type<F, In, Out, Target>;
+    flapMap: <In, Out, TargetA, TargetB>(
+        ma: HKT.Type<F, In, Out, TargetA>,
+        f: (a: TargetA) => HKT.Type<F, In, Out, TargetB>,
+    ) => HKT.Type<F, In, Out, TargetB>;
+    then?: <In, Out, TargetA, TargetB>(
+        ma: HKT.Type<F, In, Out, TargetA>,
+        mb: HKT.Type<F, In, Out, TargetB>,
+    ) => HKT.Type<F, In, Out, TargetB>;
 }
 
 export interface BoundMonad<F extends HKT.Kind> extends BoundApplicative<F> {
-    bind: <R, O, E, A, B>(
-        this: HKT.Type<F, R, O, E, A>,
-        f: (a: A) => HKT.Type<F, R, O, E, B>,
-    ) => HKT.Type<F, R, O, E, B>;
-    then?: <R, O, E, A, B>(
-        this: HKT.Type<F, R, O, E, A>,
-        mb: HKT.Type<F, R, O, E, B>,
-    ) => HKT.Type<F, R, O, E, B>;
+    flapMap: <In, Out, TargetA, TargetB>(
+        this: HKT.Type<F, In, Out, TargetA>,
+        f: (a: TargetA) => HKT.Type<F, In, Out, TargetB>,
+    ) => HKT.Type<F, In, Out, TargetB>;
+    then?: <In, Out, TargetA, TargetB>(
+        this: HKT.Type<F, In, Out, TargetA>,
+        mb: HKT.Type<F, In, Out, TargetB>,
+    ) => HKT.Type<F, In, Out, TargetB>;
 }

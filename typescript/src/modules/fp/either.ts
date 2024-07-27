@@ -4,7 +4,7 @@ import type { Functor } from "./functor";
 import type { Applicative } from "./applicative";
 
 export interface EitherKind extends HKT.Kind {
-    readonly type: Either<this["Out1"], this["Target"]>;
+    readonly type: Either<this["Out"], this["Target"]>;
 }
 
 export type Either<L, R> = Left<L, R> | Right<L, R>;
@@ -30,7 +30,12 @@ export interface BoundEither<L, R> extends BoundMonad<EitherKind> {
     ): A | B;
 }
 
-export const Either = class EitherClass<L, R> {
+export interface MonadStatic extends Monad<EitherKind> {
+    left<L>(l: L): Either<L, never>;
+    right<R>(r: R): Either<never, R>;
+}
+
+export const Either: MonadStatic = class EitherClass<L, R> {
     public readonly type = "Either";
     public readonly variant: string;
     public readonly value: L | R;
@@ -67,7 +72,7 @@ export const Either = class EitherClass<L, R> {
         return Either.right(e);
     }
 
-    public static apply<E, A, B>(
+    public static ap<E, A, B>(
         ff: Either<E, (a: A) => B>,
         ea: Either<E, A>,
     ): Either<E, B> {
@@ -79,4 +84,18 @@ export const Either = class EitherClass<L, R> {
         }
         return Either.right(ff.right(ea.right));
     }
-} satisfies Functor<EitherKind> & Applicative<EitherKind>;
+
+    public static return<E>(e: E): Either<never, E> {
+        return Either.right(e);
+    }
+
+    public static flapMap<E, A, B>(
+        ea: Either<E, A>,
+        f: (a: A) => Either<E, B>,
+    ): Either<E, B> {
+        if (ea.isLeft()) {
+            return Either.left(ea.left);
+        }
+        return f(ea.right);
+    }
+};

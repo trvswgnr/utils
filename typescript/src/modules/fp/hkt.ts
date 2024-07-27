@@ -3,15 +3,15 @@
  */
 export interface Kind {
     /**
-     * `In1` is contravariant, meaning it can be used for operations that can
+     * `In` is contravariant, meaning it can be used for operations that can
      * accept an input that is wider than the original type
      */
-    readonly In1: unknown;
+    readonly In: unknown;
     /**
-     * `Out1` is covariant, meaning it can be used for operations that return a
+     * `Out` is covariant, meaning it can be used for operations that return a
      * result that is narrower than the original type.
      */
-    readonly Out1: unknown;
+    readonly Out: unknown;
     /**
      * `Out2` is covariant, meaning it can be used for operations that return a
      * result that is narrower than the original type
@@ -27,25 +27,22 @@ export interface Kind {
 /**
  * Represents a higher-kinded type with optional type parameters
  * @template F - The base Kind
- * @template In1 - The first contravariant input type (default: never)
- * @template Out1 - The first covariant output type (default: never)
- * @template Out2 - The second covariant output type (default: never)
+ * @template In - The first contravariant input type (default: never)
+ * @template Out - The first covariant output type (default: never)
  * @template Target - The invariant target type (default: never)
  */
-export type Type<F extends Kind, In1, Out1, Out2, Target> = F extends {
+export type Type<F extends Kind, In, Out, Target> = F extends {
     readonly type: unknown;
 }
     ? (F & {
-          readonly In1: In1;
-          readonly Out1: Out1;
-          readonly Out2: Out2;
+          readonly In: In;
+          readonly Out: Out;
           readonly Target: Target;
       })["type"]
     : {
           readonly F: F;
-          readonly In1: ContravariantOp<In1>;
-          readonly Out1: CovariantOp<Out1>;
-          readonly Out2: CovariantOp<Out2>;
+          readonly In: ContravariantOp<In>;
+          readonly Out: CovariantOp<Out>;
           readonly Target: InvariantOp<Target>;
       };
 

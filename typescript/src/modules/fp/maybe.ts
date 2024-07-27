@@ -112,14 +112,14 @@ export const Maybe = class MaybeClass<T> implements BoundMaybe<T> {
         return Maybe.nothing();
     }
 
-    public static apply<A>(
+    public static ap<A>(
         fa: Maybe<A>,
     ): <B>(ff: Maybe<(a: A) => B>) => Maybe<B>;
-    public static apply<A, B>(fa: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B>;
-    public static apply<A, B>(fa: Maybe<A>, ff?: Maybe<(a: A) => B>) {
+    public static ap<A, B>(fa: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B>;
+    public static ap<A, B>(fa: Maybe<A>, ff?: Maybe<(a: A) => B>) {
         // partial application
         if (ff === undefined) {
-            return (ff: Maybe<(a: A) => B>) => Maybe.apply(fa, ff);
+            return (ff: Maybe<(a: A) => B>) => Maybe.ap(fa, ff);
         }
 
         if (fa.isJust() && ff.isJust()) {
@@ -128,12 +128,14 @@ export const Maybe = class MaybeClass<T> implements BoundMaybe<T> {
         return Maybe.nothing<B>();
     }
 
-    public static bind<A, B>(ma: Maybe<A>): (f: (a: A) => Maybe<B>) => Maybe<B>;
-    public static bind<A, B>(ma: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B>;
-    public static bind<A, B>(ma: Maybe<A>, f?: (a: A) => Maybe<B>) {
+    public static flapMap<A, B>(
+        ma: Maybe<A>,
+    ): (f: (a: A) => Maybe<B>) => Maybe<B>;
+    public static flapMap<A, B>(ma: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B>;
+    public static flapMap<A, B>(ma: Maybe<A>, f?: (a: A) => Maybe<B>) {
         // partial application
         if (f === undefined) {
-            return (f: (a: A) => Maybe<B>) => Maybe.bind(ma, f);
+            return (f: (a: A) => Maybe<B>) => Maybe.flapMap(ma, f);
         }
 
         if (ma.isNothing()) {
@@ -142,12 +144,12 @@ export const Maybe = class MaybeClass<T> implements BoundMaybe<T> {
         return f(ma.value);
     }
 
-    public bind<A, B>(this: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> {
-        return Maybe.bind(this, f);
+    public flapMap<A, B>(this: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> {
+        return Maybe.flapMap(this, f);
     }
 
-    public apply<A, B>(this: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B> {
-        return Maybe.apply(this, ff);
+    public ap<A, B>(this: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B> {
+        return Maybe.ap(this, ff);
     }
 
     public fmap<A, B>(this: Maybe<A>, f: (a: A) => B): Maybe<B> {
