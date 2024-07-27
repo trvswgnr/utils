@@ -1,7 +1,5 @@
 import type { BoundMonad, Monad } from "./monad";
 import type * as HKT from "./hkt";
-import type { Functor } from "./functor";
-import type { Applicative } from "./applicative";
 
 export interface EitherKind extends HKT.Kind {
     readonly type: Either<this["Out"], this["Target"]>;

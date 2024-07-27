@@ -1,13 +1,13 @@
-type NonFnObject<T> = T extends object
+type IsNonFnObject<T> = T extends object
     ? T extends (...args: never[]) => unknown
-        ? never
-        : T
-    : never;
+        ? false
+        : true
+    : false;
 
 export type Identity<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => R
     : {
-          [K in keyof T]: T[K] extends NonFnObject<T[K]>
+          [K in keyof T]: IsNonFnObject<T[K]> extends true
               ? Identity<T[K]>
               : T[K];
       } & {};
