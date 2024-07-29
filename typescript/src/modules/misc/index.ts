@@ -1,3 +1,5 @@
+import type { Identity } from "../fp/identity";
+
 export { fetchJson } from "./fetchJson";
 
 /**
@@ -36,27 +38,79 @@ export function UInt32(n: number): UInt32 {
 
 export const BAIL = Symbol("BAIL");
 
-export function staticImplements<T>() {
-    return <U extends T>(constructor: U) => {
-        constructor;
+/**
+ * A method decorator that logs the entry and exit of a method.
+ *
+ * @example
+ * ```ts
+ * class MyClass {
+ *     @loggedMethod
+ *     myMethod(arg: string) {
+ *         return `Hello, ${arg}!`;
+ *     }
+ * }
+ * ```
+ */
+export function loggedMethod<This, Args extends any[], Return>(
+    target: (this: This, ...args: Args) => Return,
+    context: ClassMethodDecoratorContext<
+        This,
+        (this: This, ...args: Args) => Return
+    >,
+) {
+    const methodName = String(context.name);
+
+    function replacementMethod(this: This, ...args: Args): Return {
+        console.log(`LOG: Entering method '${methodName}'.`);
+        const result = target.call(this, ...args);
+        console.log(`LOG: Exiting method '${methodName}'.`);
+        return result;
+    }
+
+    return replacementMethod;
+}
+
+/**
+ * A class decorator that allows implementing static methods on a class.
+ *
+ * @example
+ * ```ts
+ * @implStatic<MyInterface>({
+ *     myStaticMethod(arg: string) {
+ *         return `Hello, ${arg}!`;
+ *     }
+ * })
+ * class MyClass {
+ *     static myStaticMethod(arg: string) {
+ *         return `Hello, ${arg}!`;
+ *     }
+ * }
+ * ```
+ */
+// ... existing code ...
+
+/**
+ * A class decorator that allows implementing static methods on a class.
+ *
+ * @example
+ * ```ts
+ * @implStatic<MyInterface>({
+ *     myStaticMethod(arg: string) {
+ *         return `Hello, ${arg}!`;
+ *     }
+ * })
+ * class MyClass {
+ *     static myStaticMethod(arg: string) {
+ *         return `Hello, ${arg}!`;
+ *     }
+ * }
+ * ```
+ */
+export function implStatic<T extends object>(implementation: T) {
+    return function <C extends new (...args: any[]) => any>(
+        constructor: C,
+    ): C & T {
+        Object.assign(constructor, implementation);
+        return constructor as C & T;
     };
-}
-
-export function implPrototype<U, C extends new (...args: any[]) => any>(
-    c: C,
-    u: U,
-): C & U {
-    return class A extends c {
-        constructor(...args: any[]) {
-            super(...args);
-            Object.assign(this, u);
-        }
-    } as any;
-}
-
-export function implStatic<U, C extends new (...args: any[]) => any>(
-    c: C,
-    u: U,
-): C & U {
-    return Object.assign(c, u);
 }

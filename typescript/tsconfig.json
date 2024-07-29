@@ -13,8 +13,6 @@
         "allowImportingTsExtensions": true,
         "verbatimModuleSyntax": true,
         "noEmit": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
 
         // Best practices
         "strict": true,

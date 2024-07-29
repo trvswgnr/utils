@@ -1,4 +1,4 @@
-import type { BoundMonad, Monad } from "./monad";
+import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
 
 export interface EitherKind extends HKT.Kind {
@@ -19,7 +19,7 @@ export interface Right<L, R> extends BoundEither<L, R> {
     readonly right: R;
 }
 
-export interface BoundEither<L, R> extends BoundMonad<EitherKind> {
+export interface BoundEither<L, R> extends MonadInstance<EitherKind> {
     isLeft: () => this is Left<L, R>;
     isRight: () => this is Right<L, R>;
     match<L, R, A, B>(
@@ -87,7 +87,7 @@ export const Either: MonadStatic = class EitherClass<L, R> {
         return Either.right(e);
     }
 
-    public static flapMap<E, A, B>(
+    public static flatMap<E, A, B>(
         ea: Either<E, A>,
         f: (a: A) => Either<E, B>,
     ): Either<E, B> {

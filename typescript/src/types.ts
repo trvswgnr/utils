@@ -145,3 +145,20 @@ export type IsNonFnObject<T> = T extends object
         ? false
         : true
     : false;
+
+/**
+ * A type-level utility for extracting only the functions from an object type.
+ *
+ * @template T - The input object type
+ *
+ * @example
+ * type MyObject = {
+ *   a: () => void;
+ *   b: string;
+ *   c: () => number;
+ * };
+ * type X = OnlyFns<MyObject>; // { a: () => void; c: () => number }
+ */
+export type OnlyFns<T> = {
+    [K in keyof T as T[K] extends AnyFn ? K : never]: T[K];
+};

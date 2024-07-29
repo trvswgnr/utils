@@ -1,15 +1,15 @@
 import type * as HKT from "./hkt";
 
 export interface Functor<F extends HKT.Kind> extends HKT.Class<F> {
-    fmap: <In, Out, TargetA, TargetB>(
-        f: (a: TargetA) => TargetB,
-        fa: HKT.Type<F, In, Out, TargetA>,
-    ) => HKT.Type<F, In, Out, TargetB>;
+    fmap: <In, Out, A, B>(
+        f: (a: A) => B,
+        fa: HKT.Type<F, In, Out, A>,
+    ) => HKT.Type<F, In, Out, B>;
 }
 
-export interface BoundFunctor<F extends HKT.Kind> extends HKT.Class<F> {
-    fmap: <In, Out, TargetA, TargetB>(
-        this: HKT.Type<F, In, Out, TargetA>,
-        f: (a: TargetA) => TargetB,
-    ) => HKT.Type<F, In, Out, TargetB>;
+export interface FunctorInstance<F extends HKT.Kind> extends HKT.Class<F> {
+    fmap: <In, Out, A, B>(
+        this: HKT.Type<F, In, Out, A>,
+        f: (a: A) => B,
+    ) => HKT.Type<F, In, Out, B>;
 }
