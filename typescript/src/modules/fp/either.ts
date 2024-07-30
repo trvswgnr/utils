@@ -44,9 +44,7 @@ export interface EitherStatic
     ) => (matchers: { Left: (value: L) => T; Right: (value: R) => T }) => T;
 }
 
-export const Either: EitherStatic = class EitherClass<L, R>
-    implements EitherInstance
-{
+export const Either = class EitherConstructor<L, R> implements EitherInstance {
     public readonly type = "Either";
     public readonly variant: "Left" | "Right";
     public readonly value: L | R;
@@ -114,7 +112,7 @@ export const Either: EitherStatic = class EitherClass<L, R>
     // FunctorInstance
 
     public fmap<E, A, B>(this: Either<E, A>, f: (a: A) => B): Either<E, B> {
-        return EitherClass.fmap(f)(this);
+        return EitherConstructor.fmap(f)(this);
     }
 
     // ApplicativeInstance
@@ -123,7 +121,7 @@ export const Either: EitherStatic = class EitherClass<L, R>
         this: Either<E, A>,
         ff: Either<E, (a: A) => B>,
     ): Either<E, B> {
-        return EitherClass.ap(ff)(this);
+        return EitherConstructor.ap(ff)(this);
     }
 
     // MonadInstance
@@ -132,7 +130,7 @@ export const Either: EitherStatic = class EitherClass<L, R>
         this: Either<E, A>,
         f: (a: A) => Either<E, B>,
     ): Either<E, B> {
-        return EitherClass.bind(this)(f);
+        return EitherConstructor.bind(this)(f);
     }
 
     // EitherInstance
@@ -153,12 +151,12 @@ export const Either: EitherStatic = class EitherClass<L, R>
             ? matchers.Left(this.value)
             : matchers.Right(this.value);
     }
-};
+} satisfies EitherStatic;
 
-function Left<L>(v: L): Either<L, never> {
+export function Left<L>(v: L): Either<L, never> {
     return new (Either as any)(v, "Left") as Either<L, never>;
 }
 
-function Right<R>(v: R): Either<never, R> {
+export function Right<R>(v: R): Either<never, R> {
     return new (Either as any)(v, "Right") as Either<never, R>;
 }

@@ -120,7 +120,7 @@ export interface MaybeInstance
     maybeToList: <A>(this: Maybe<A>) => [] | [A];
 }
 
-export const Maybe: MaybeStatic = class<T> implements MaybeInstance {
+export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
     readonly type = "Maybe";
     readonly variant: "Just" | "Nothing";
     readonly value: T;
@@ -253,47 +253,44 @@ export const Maybe: MaybeStatic = class<T> implements MaybeInstance {
         };
 
     fmap<A, B>(this: Maybe<A>, f: (a: A) => B): Maybe<B> {
-        return Maybe.fmap(f)(this);
+        return MaybeConstructor.fmap(f)(this);
     }
 
     ap<A, B>(this: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B> {
-        return Maybe.ap(ff)(this);
+        return MaybeConstructor.ap(ff)(this);
     }
 
     bind<A, B>(this: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> {
-        return Maybe.bind(this)(f);
+        return MaybeConstructor.bind(this)(f);
     }
 
     maybe<A, B>(this: Maybe<A>, f: (a: A) => B, defaultValue: B): B {
-        return Maybe.maybe(defaultValue)(f)(this);
+        return MaybeConstructor.maybe(defaultValue)(f)(this);
     }
 
     isJust<A>(this: Maybe<A>): this is Just<A> {
-        return Maybe.isJust(this);
+        return MaybeConstructor.isJust(this);
     }
 
     isNothing<A>(this: Maybe<A>): this is Nothing {
-        return Maybe.isNothing(this);
+        return MaybeConstructor.isNothing(this);
     }
 
     fromJust<A>(this: Maybe<A>): A {
-        return Maybe.fromJust(this);
+        return MaybeConstructor.fromJust(this);
     }
 
     maybeToList<A>(this: Maybe<A>): [] | [A] {
-        return Maybe.maybeToList(this);
+        return MaybeConstructor.maybeToList(this);
     }
 
     match<A, B>(
         this: Maybe<A>,
         matchers: { Just: (value: A) => B; Nothing: () => B },
     ): B {
-        if (this.isJust()) {
-            return matchers.Just(this.value);
-        }
-        return matchers.Nothing();
+        return MaybeConstructor.match(this)(matchers);
     }
-};
+} satisfies MaybeStatic;
 
 export function Just<T>(v: T): Maybe<T> {
     return new (Maybe as any)(v, "Just");
