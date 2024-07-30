@@ -6,22 +6,22 @@ export interface Kind {
      * `In` is contravariant, meaning it can be used for operations that can
      * accept an input that is wider than the original type
      */
-    readonly In: unknown;
+    readonly In?: unknown;
     /**
      * `Out` is covariant, meaning it can be used for operations that return a
      * result that is narrower than the original type.
      */
-    readonly Out: unknown;
+    readonly Out2?: unknown;
     /**
      * `Out2` is covariant, meaning it can be used for operations that return a
      * result that is narrower than the original type
      */
-    readonly Out2: unknown;
+    readonly Out1?: unknown;
     /**
      * `Target` is invariant, meaning it can be used for operations that do not
      * change the type of the input or output
      */
-    readonly Target: unknown;
+    readonly Target?: unknown;
 }
 
 /**
@@ -31,18 +31,20 @@ export interface Kind {
  * @template Out - The first covariant output type (default: never)
  * @template Target - The invariant target type (default: never)
  */
-export type Type<F extends Kind, In, Out, Target> = F extends {
+export type Type<F extends Kind, In, Out2, Out1, Target> = F extends {
     readonly type: unknown;
 }
     ? (F & {
           readonly In: In;
-          readonly Out: Out;
+          readonly Out2: Out2;
+          readonly Out1: Out1;
           readonly Target: Target;
       })["type"]
     : {
           readonly F: F;
           readonly In: ContravariantOp<In>;
-          readonly Out: CovariantOp<Out>;
+          readonly Out2: CovariantOp<Out2>;
+          readonly Out1: CovariantOp<Out1>;
           readonly Target: InvariantOp<Target>;
       };
 
@@ -63,12 +65,12 @@ export interface Class<F extends Kind> {
 /**
  * Represents a contravariant operation that accepts an input of type `In`
  */
-export type ContravariantOp<In> = (_: In) => void;
+export type ContravariantOp<in In> = (_: In) => void;
 
 /**
  * Represents a covariant operation that returns a value of type `Out`
  */
-export type CovariantOp<Out> = () => Out;
+export type CovariantOp<out Out> = () => Out;
 
 /**
  * Represents an invariant operation that both accepts and returns a value of

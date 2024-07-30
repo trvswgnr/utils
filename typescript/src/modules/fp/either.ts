@@ -4,7 +4,7 @@ import type { Functor, FunctorInstance } from "./functor";
 import type { Applicative, ApplicativeInstance } from "./applicative";
 
 export interface EitherKind extends HKT.Kind {
-    readonly type: Either<this["Out"], this["Target"]>;
+    readonly type: Either<this["Out1"], this["Target"]>;
 }
 
 export type Either<L, R> = Left<L> | Right<R>;

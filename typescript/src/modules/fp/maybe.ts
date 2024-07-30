@@ -2,7 +2,6 @@ import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
 import type { Functor, FunctorInstance } from "./functor";
 import type { Applicative, ApplicativeInstance } from "./applicative";
-import type { MatchInstance } from "./lib";
 
 export interface MaybeKind extends HKT.Kind {
     readonly type: Maybe<this["Target"]>;
@@ -11,13 +10,11 @@ export interface MaybeKind extends HKT.Kind {
 export type Maybe<T> = Just<T> | Nothing;
 
 export interface Just<out T> extends MaybeInstance {
-    readonly type: "Maybe";
     readonly variant: "Just";
     readonly value: T;
 }
 
 export interface Nothing extends MaybeInstance {
-    readonly type: "Maybe";
     readonly variant: "Nothing";
 }
 
@@ -121,7 +118,6 @@ export interface MaybeInstance
 }
 
 export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
-    readonly type = "Maybe";
     readonly variant: "Just" | "Nothing";
     readonly value: T;
 

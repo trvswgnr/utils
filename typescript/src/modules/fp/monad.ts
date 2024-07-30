@@ -1,22 +1,22 @@
 import type * as HKT from "./hkt";
 
 export interface Monad<F extends HKT.Kind> extends HKT.Class<F> {
-    return: <In, Out, A>(a: A) => HKT.Type<F, In, Out, A>;
-    bind: <In, Out, A>(
-        ma: HKT.Type<F, In, Out, A>,
-    ) => <B>(f: (a: A) => HKT.Type<F, In, Out, B>) => HKT.Type<F, In, Out, B>;
-    then?: <In, Out, A>(
-        ma: HKT.Type<F, In, Out, A>,
-    ) => <B>(mb: HKT.Type<F, In, Out, B>) => HKT.Type<F, In, Out, B>;
+    return: <In, Out2, Out1, A>(a: A) => HKT.Type<F, In, Out2, Out1, A>;
+    bind: <In, Out2, Out1, A>(
+        ma: HKT.Type<F, In, Out2, Out1, A>,
+    ) => <B>(f: (a: A) => HKT.Type<F, In, Out2, Out1, B>) => HKT.Type<F, In, Out2, Out1, B>;
+    then?: <In, Out2, Out1, A>(
+        ma: HKT.Type<F, In, Out2, Out1, A>,
+    ) => <B>(mb: HKT.Type<F, In, Out2, Out1, B>) => HKT.Type<F, In, Out2, Out1, B>;
 }
 
 export interface MonadInstance<F extends HKT.Kind> extends HKT.Class<F> {
-    bind: <In, Out, A, B>(
-        this: HKT.Type<F, In, Out, A>,
-        f: (a: A) => HKT.Type<F, In, Out, B>,
-    ) => HKT.Type<F, In, Out, B>;
-    then?: <In, Out, A, B>(
-        this: HKT.Type<F, In, Out, A>,
-        mb: HKT.Type<F, In, Out, B>,
-    ) => HKT.Type<F, In, Out, B>;
+    bind: <In, Out2, Out1, A, B>(
+        this: HKT.Type<F, In, Out2, Out1, A>,
+        f: (a: A) => HKT.Type<F, In, Out2, Out1, B>,
+    ) => HKT.Type<F, In, Out2, Out1, B>;
+    then?: <In, Out2, Out1, A, B>(
+        this: HKT.Type<F, In, Out2, Out1, A>,
+        mb: HKT.Type<F, In, Out2, Out1, B>,
+    ) => HKT.Type<F, In, Out2, Out1, B>;
 }

@@ -20,7 +20,7 @@ import type { Args } from "~/types";
  */
 export function compose<RInner, ROuter>(
     f: (arg: RInner) => ROuter,
-): <AInner extends readonly any[]>(
+): <AInner extends Args>(
     g: (...args: AInner) => RInner,
 ) => (...args: AInner) => ROuter;
 /**
