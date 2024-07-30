@@ -169,4 +169,38 @@ describe("Maybe", () => {
             }
         });
     });
+
+    describe("instance works the same as static", () => {
+        test("fmap", () => {
+            const a = Just(1);
+            const b = a.fmap((x) => x + 1);
+            const c = Maybe.fmap((x: number) => x + 1)(a);
+            expect(b).toEqual(c);
+        });
+        test("ap", () => {
+            const a = Just((x: number) => x + 1);
+            const b = Just(2);
+            const c = Maybe.ap(a)(b);
+            const d = b.ap(a);
+            expect(c).toEqual(d);
+        });
+        test("pure", () => {
+            const a = 1;
+            const b = Maybe.pure(a);
+            const c = Just(a);
+            expect(b).toEqual(c);
+        });
+        test("return", () => {
+            const a = 1;
+            const b = Maybe.return(a);
+            const c = Just(a);
+            expect(b).toEqual(c);
+        });
+        test("bind", () => {
+            const a = Just(1);
+            const b = a.bind((x) => Just(x + 1));
+            const c = Maybe.bind(a)((x) => Just(x + 1));
+            expect(b).toEqual(c);
+        });
+    });
 });

@@ -1,99 +1,164 @@
 import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
+import type { Functor, FunctorInstance } from "./functor";
+import type { Applicative, ApplicativeInstance } from "./applicative";
 
 export interface EitherKind extends HKT.Kind {
     readonly type: Either<this["Out"], this["Target"]>;
 }
 
-export type Either<L, R> = Left<L, R> | Right<L, R>;
+export type Either<L, R> = Left<L> | Right<R>;
 
-export interface Left<L, R> extends BoundEither<L, R> {
+export interface Left<L> extends EitherInstance {
     readonly type: "Either";
     readonly variant: "Left";
-    readonly left: L;
+    readonly value: L;
 }
 
-export interface Right<L, R> extends BoundEither<L, R> {
+export interface Right<R> extends EitherInstance {
     readonly type: "Either";
     readonly variant: "Right";
-    readonly right: R;
+    readonly value: R;
 }
 
-export interface BoundEither<L, R> extends MonadInstance<EitherKind> {
-    isLeft: () => this is Left<L, R>;
-    isRight: () => this is Right<L, R>;
+export interface EitherInstance
+    extends FunctorInstance<EitherKind>,
+        ApplicativeInstance<EitherKind>,
+        MonadInstance<EitherKind> {
+    isLeft<L, R>(this: Either<L, R>): this is Left<L>;
+    isRight<L, R>(this: Either<L, R>): this is Right<R>;
     match<L, R, A, B>(
         this: Either<L, R>,
-        matchers: { onLeft: (value: L) => A; onRight: (value: R) => B },
+        matchers: { Left: (value: L) => A; Right: (value: R) => B },
     ): A | B;
 }
 
-export interface MonadStatic extends Monad<EitherKind> {
-    left<L>(l: L): Either<L, never>;
-    right<R>(r: R): Either<never, R>;
+export interface EitherStatic
+    extends Functor<EitherKind>,
+        Applicative<EitherKind>,
+        Monad<EitherKind> {
+    isLeft: <L, R>(e: Either<L, R>) => e is Left<L>;
+    isRight: <L, R>(e: Either<L, R>) => e is Right<R>;
+    match: <L, R, T>(
+        e: Either<L, R>,
+    ) => (matchers: { Left: (value: L) => T; Right: (value: R) => T }) => T;
 }
 
-export const Either: MonadStatic = class EitherClass<L, R> {
+export const Either: EitherStatic = class EitherClass<L, R>
+    implements EitherInstance
+{
     public readonly type = "Either";
-    public readonly variant: string;
+    public readonly variant: "Left" | "Right";
     public readonly value: L | R;
 
-    private constructor(value: L | R, variant: string) {
+    private constructor(value: L | R, variant: "Left" | "Right") {
         this.variant = variant;
         this.value = value;
     }
 
-    public static left<L>(v: L): Either<L, never> {
-        return new EitherClass<L, never>(v, "Left") as any;
+    // Functor
+
+    public static fmap =
+        <A0, B>(f: (a: A0) => B) =>
+        <A>(ea: Either<A, A0>): Either<A, B> => {
+            return ea.isLeft() ? ea : Right(f(ea.value));
+        };
+
+    // Applicative
+
+    public static pure = <A>(a: A): Either<never, A> => Right(a);
+
+    public static ap =
+        <E, A, B>(ff: Either<E, (a: A) => B>) =>
+        (ea: Either<E, A>): Either<E, B> => {
+            if (ff.isLeft()) {
+                return Left(ff.value) as any;
+            }
+            if (ea.isLeft()) {
+                return Left(ea.value) as any;
+            }
+            return Right(ff.value(ea.value));
+        };
+
+    // Monad
+
+    public static return = this.pure;
+
+    public static bind =
+        <E, A>(ea: Either<E, A>) =>
+        <B>(f: (a: A) => Either<E, B>): Either<E, B> => {
+            if (ea.isLeft()) {
+                return Left(ea.value);
+            }
+            return f(ea.value);
+        };
+
+    // EitherStatic
+
+    public static isLeft = <L, R>(e: Either<L, R>): e is Left<L> => {
+        return e.variant === "Left";
+    };
+
+    public static isRight = <L, R>(e: Either<L, R>): e is Right<R> => {
+        return e.variant === "Right";
+    };
+
+    public static match =
+        <L, R, T>(e: Either<L, R>) =>
+        (matchers: { Left: (value: L) => T; Right: (value: R) => T }) => {
+            return e.isLeft()
+                ? matchers.Left(e.value)
+                : matchers.Right(e.value);
+        };
+
+    // FunctorInstance
+
+    public fmap<E, A, B>(this: Either<E, A>, f: (a: A) => B): Either<E, B> {
+        return EitherClass.fmap(f)(this);
     }
 
-    public static right<R>(v: R): Either<never, R> {
-        return new EitherClass<never, R>(v, "Right") as any;
-    }
+    // ApplicativeInstance
 
-    public isLeft(): this is Left<L, R> {
-        return this.variant === "Left";
-    }
-
-    public isRight(): this is Right<L, R> {
-        return this.variant === "Right";
-    }
-
-    public static fmap<E, A, B>(
-        f: (a: E) => B,
-        ea: Either<A, E>,
-    ): Either<A, B> {
-        return ea.isLeft() ? ea : (Either.right(f(ea.right)) as any);
-    }
-
-    public static pure<E>(e: E): Either<never, E> {
-        return Either.right(e);
-    }
-
-    public static ap<E, A, B>(
+    public ap<E, A, B>(
+        this: Either<E, A>,
         ff: Either<E, (a: A) => B>,
-        ea: Either<E, A>,
     ): Either<E, B> {
-        if (ff.isLeft()) {
-            return Either.left(ff.left);
-        }
-        if (ea.isLeft()) {
-            return Either.left(ea.left);
-        }
-        return Either.right(ff.right(ea.right));
+        return EitherClass.ap(ff)(this);
     }
 
-    public static return<E>(e: E): Either<never, E> {
-        return Either.right(e);
-    }
+    // MonadInstance
 
-    public static flatMap<E, A, B>(
-        ea: Either<E, A>,
+    public bind<E, A, B>(
+        this: Either<E, A>,
         f: (a: A) => Either<E, B>,
     ): Either<E, B> {
-        if (ea.isLeft()) {
-            return Either.left(ea.left);
-        }
-        return f(ea.right);
+        return EitherClass.bind(this)(f);
+    }
+
+    // EitherInstance
+
+    public isLeft<L, R>(this: Either<L, R>): this is Left<L> {
+        return Either.isLeft(this);
+    }
+
+    public isRight<L, R>(this: Either<L, R>): this is Right<R> {
+        return Either.isRight(this);
+    }
+
+    public match<L, R, A, B>(
+        this: Either<L, R>,
+        matchers: { Left: (value: L) => A; Right: (value: R) => B },
+    ): A | B {
+        return this.isLeft()
+            ? matchers.Left(this.value)
+            : matchers.Right(this.value);
     }
 };
+
+function Left<L>(v: L): Either<L, never> {
+    return new (Either as any)(v, "Left") as Either<L, never>;
+}
+
+function Right<R>(v: R): Either<never, R> {
+    return new (Either as any)(v, "Right") as Either<never, R>;
+}

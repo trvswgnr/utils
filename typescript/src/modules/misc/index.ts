@@ -71,15 +71,11 @@ export function loggedMethod<This, Args extends any[], Return>(
 }
 
 /**
- * A class decorator that allows implementing static methods on a class.
+ * A decorator that ensures a class implements a static method.
  *
  * @example
  * ```ts
- * @implStatic<MyInterface>({
- *     myStaticMethod(arg: string) {
- *         return `Hello, ${arg}!`;
- *     }
- * })
+ * @staticImplements<MyInterface>()
  * class MyClass {
  *     static myStaticMethod(arg: string) {
  *         return `Hello, ${arg}!`;
@@ -87,30 +83,8 @@ export function loggedMethod<This, Args extends any[], Return>(
  * }
  * ```
  */
-// ... existing code ...
-
-/**
- * A class decorator that allows implementing static methods on a class.
- *
- * @example
- * ```ts
- * @implStatic<MyInterface>({
- *     myStaticMethod(arg: string) {
- *         return `Hello, ${arg}!`;
- *     }
- * })
- * class MyClass {
- *     static myStaticMethod(arg: string) {
- *         return `Hello, ${arg}!`;
- *     }
- * }
- * ```
- */
-export function implStatic<T extends object>(implementation: T) {
-    return function <C extends new (...args: any[]) => any>(
-        constructor: C,
-    ): C & T {
-        Object.assign(constructor, implementation);
-        return constructor as C & T;
+export function staticImplements<T>() {
+    return <U extends T>(constructor: U) => {
+        constructor;
     };
 }

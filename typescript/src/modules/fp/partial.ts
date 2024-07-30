@@ -1,4 +1,4 @@
-import type { Args, Length, ShiftN } from "~/types";
+import type { AnyFn, Args, Length, ShiftN } from "~/types";
 
 export namespace PartialApplication {
     /**
@@ -38,6 +38,10 @@ export namespace PartialApplication {
                       accumulator(...providedArgs.concat(addtlArgs)); // Return a new function to collect more arguments
         };
     }
+
+    export function unsafe<F extends AnyFn>(fn: F): AnyFn {
+        return of(fn) as any;
+    }
 }
 
 /**
@@ -66,7 +70,7 @@ export type PartialApplication<P extends Args, R> = <T extends Partial<P>>(
     ...args: T
 ) => T["length"] extends P["length"]
     ? R
-    : PartialApplication<ShiftN<P, Length<T>>, R>;
+    : ((...args: P) => R) & PartialApplication<ShiftN<P, Length<T>>, R>;
 
 /**
  * Transforms a regular function type into its partially applied equivalent
@@ -74,6 +78,6 @@ export type PartialApplication<P extends Args, R> = <T extends Partial<P>>(
  * @template F - The original function type
  * @returns The PartiallyApplied type corresponding to the input function type
  */
-export type ToPartialApplication<F> = F extends (...args: infer A) => infer R
+export type ToPartialApplication<T> = T extends (...args: infer A) => infer R
     ? PartialApplication<A, R>
     : never;

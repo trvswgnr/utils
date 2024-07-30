@@ -2,6 +2,7 @@ import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
 import type { Functor, FunctorInstance } from "./functor";
 import type { Applicative, ApplicativeInstance } from "./applicative";
+import type { MatchInstance } from "./lib";
 
 export interface MaybeKind extends HKT.Kind {
     readonly type: Maybe<this["Target"]>;
@@ -30,7 +31,7 @@ export interface MaybeStatic
      * applies the function to the value inside the `Just` and returns the
      * result.
      */
-    maybe<A, B>(defaultValue: B, f: (a: A) => B, ma: Maybe<A>): B;
+    maybe: <B>(defaultValue: B) => <A>(f: (a: A) => B) => (ma: Maybe<A>) => B;
     /**
      * Checks if the `Maybe` is `Just`.
      */
@@ -50,7 +51,7 @@ export interface MaybeStatic
      * it returns the default value; otherwise, it returns the value contained
      * in the `Maybe`.
      */
-    fromMaybe<A>(defaultValue: A, ma: Maybe<A>): A;
+    fromMaybe: <A>(defaultValue: A) => (ma: Maybe<A>) => A;
     /**
      * Returns `Nothing` on an empty list or `Just<A>` where `A` is the first
      * element of the list.
@@ -71,7 +72,7 @@ export interface MaybeStatic
      * `Nothing`, no element is added on to the result list. If it is `Just<B>`,
      * then `B` is included in the result list.
      */
-    mapMaybe<A, B>(f: (a: A) => Maybe<B>, list: Array<A>): Array<B>;
+    mapMaybe: <A, B>(f: (a: A) => Maybe<B>) => (list: Array<A>) => Array<B>;
     /**
      * Creates a `Maybe` from a value. If the value is `null` or `undefined`, it
      * returns `Nothing`. Otherwise, it returns `Just(value)`.
@@ -80,10 +81,9 @@ export interface MaybeStatic
     /**
      * Match a `Maybe` value with a function.
      */
-    match<A, B>(
+    match: <A, B>(
         ma: Maybe<A>,
-        matchers: { onJust: (value: A) => B; onNothing: () => B },
-    ): B;
+    ) => (matchers: { Just: (value: A) => B; Nothing: () => B }) => B;
 }
 
 export interface MaybeInstance
@@ -115,146 +115,105 @@ export interface MaybeInstance
      */
     match: <A, B>(
         this: Maybe<A>,
-        matchers: { onJust: (value: A) => B; onNothing: () => B },
+        matchers: { Just: (value: A) => B; Nothing: () => B },
     ) => B;
     maybeToList: <A>(this: Maybe<A>) => [] | [A];
 }
 
-export const MaybeStatic = class {
-    // Functor
-    static fmap<A, B>(f: (a: A) => B, fa: Maybe<A>): Maybe<B>;
-    static fmap<A, B>(f: (a: A) => B): (fa: Maybe<A>) => Maybe<B>;
-    static fmap<A, B>(f: (a: A) => B, fa?: Maybe<A>) {
-        // partial application
-        if (fa === undefined) {
-            return (fa: Maybe<A>) => MaybeStatic.fmap(f, fa);
-        }
+export const Maybe: MaybeStatic = class<T> implements MaybeInstance {
+    readonly type = "Maybe";
+    readonly variant: "Just" | "Nothing";
+    readonly value: T;
 
-        if (fa.isNothing()) {
-            return Nothing<B>();
-        }
-        return Just(f(fa.value));
+    private constructor(value: T, variant: "Just" | "Nothing") {
+        this.variant = variant;
+        this.value = value;
     }
+
+    // Functor
+    static fmap =
+        <A, B>(f: (a: A) => B) =>
+        (fa: Maybe<A>): Maybe<B> => {
+            if (fa.isNothing()) {
+                return Nothing<B>();
+            }
+            return Just(f(fa.value));
+        };
 
     // Applicative
 
-    static pure<A>(a: A): Maybe<A> {
-        return Just(a);
-    }
+    static pure = <A>(a: A): Maybe<A> => Just(a);
 
-    static ap<A, B>(ff: Maybe<(a: A) => B>, fa: Maybe<A>): Maybe<B>;
-    static ap<A, B>(ff: Maybe<(a: A) => B>): (fa: Maybe<A>) => Maybe<B>;
-    static ap<A, B>(ff: Maybe<(a: A) => B>, fa?: Maybe<A>) {
-        // partial application
-        if (fa === undefined) {
-            return (fa: Maybe<A>) => MaybeStatic.ap(ff, fa);
-        }
-
-        if (ff.isNothing() || fa.isNothing()) {
-            return Nothing<B>();
-        }
-        return Just(ff.value(fa.value));
-    }
+    static ap =
+        <A, B>(ff: Maybe<(a: A) => B>) =>
+        (fa: Maybe<A>): Maybe<B> => {
+            if (ff.isNothing() || fa.isNothing()) {
+                return Nothing<B>();
+            }
+            return Just(ff.value(fa.value));
+        };
 
     // Monad
 
-    static return<A>(a: A): Maybe<A> {
-        return Just(a);
-    }
+    static return = <A>(a: A): Maybe<A> => Just(a);
 
-    static flatMap<A, B>(ma: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B>;
-    static flatMap<A>(ma: Maybe<A>): <B>(f: (a: A) => Maybe<B>) => Maybe<B>;
-    static flatMap<A, B>(ma: Maybe<A>, f?: (a: A) => Maybe<B>) {
-        // partial application
-        if (f === undefined) {
-            return (f: (a: A) => Maybe<B>) => MaybeStatic.flatMap(ma, f);
-        }
-
-        if (ma.isNothing()) {
-            return Nothing<B>();
-        }
-        return f(ma.value);
-    }
+    static bind =
+        <A>(ma: Maybe<A>) =>
+        <B>(f: (a: A) => Maybe<B>): Maybe<B> => {
+            if (ma.isNothing()) {
+                return Nothing();
+            }
+            return f(ma.value);
+        };
 
     // Maybe
 
-    static maybe<A, B>(defaultValue: B, f: (a: A) => B, ma: Maybe<A>): B;
-    static maybe<A, B>(defaultValue: B, f: (a: A) => B): (ma: Maybe<A>) => B;
-    static maybe<A, B>(
-        defaultValue: B,
-    ): (f: (a: A) => B) => (ma: Maybe<A>) => B;
-    static maybe<A, B>(defaultValue: B, f?: (a: A) => B, ma?: Maybe<A>) {
-        // partial application
-        if (f === undefined) {
-            return (f: (a: A) => B) => (ma?: Maybe<A>) => {
-                // partial application
-                if (ma === undefined) {
-                    return (ma: Maybe<A>) =>
-                        MaybeStatic.maybe(defaultValue, f, ma);
-                }
+    static maybe =
+        <B>(defaultValue: B) =>
+        <A>(f: (a: A) => B) =>
+        (ma: Maybe<A>): B => {
+            if (ma.isNothing()) {
+                return defaultValue;
+            }
+            return f(ma.value);
+        };
 
-                if (ma.isNothing()) {
-                    return defaultValue;
-                }
-                return f(ma.value);
-            };
-        }
+    static isJust = <A>(ma: Maybe<A>): ma is Just<A> => ma.variant === "Just";
 
-        // partial application
-        if (ma === undefined) {
-            return (ma: Maybe<A>) => MaybeStatic.maybe(defaultValue, f, ma);
-        }
+    static isNothing = <A>(ma: Maybe<A>): ma is Nothing =>
+        ma.variant === "Nothing";
 
-        if (ma.isNothing()) {
-            return defaultValue;
-        }
-        return f(ma.value);
-    }
-
-    static isJust<A>(ma: Maybe<A>): ma is Just<A> {
-        return ma.variant === "Just";
-    }
-
-    static isNothing<A>(ma: Maybe<A>): ma is Nothing {
-        return ma.variant === "Nothing";
-    }
-
-    static fromJust<A>(ma: Maybe<A>): A {
+    static fromJust = <A>(ma: Maybe<A>): A => {
         if (ma.isNothing()) {
             throw new Error("Maybe is Nothing");
         }
         return ma.value;
-    }
+    };
 
-    static fromMaybe<A>(defaultValue: A, ma: Maybe<A>): A;
-    static fromMaybe<A>(defaultValue: A): (ma: Maybe<A>) => A;
-    static fromMaybe<A>(defaultValue: A, ma?: Maybe<A>) {
-        // partial application
-        if (ma === undefined) {
-            return (ma: Maybe<A>) => MaybeStatic.fromMaybe(defaultValue, ma);
-        }
+    static fromMaybe =
+        <A>(defaultValue: A) =>
+        (ma: Maybe<A>): A => {
+            if (ma.isNothing()) {
+                return defaultValue;
+            }
+            return ma.value;
+        };
 
-        if (ma.isNothing()) {
-            return defaultValue;
-        }
-        return ma.value;
-    }
-
-    static listToMaybe<A>(list: Array<A>): Maybe<A> {
+    static listToMaybe = <A>(list: Array<A>): Maybe<A> => {
         if (list.length === 0) {
             return Nothing();
         }
         return Just(list[0]!);
-    }
+    };
 
-    static maybeToList<A>(ma: Maybe<A>): [] | [A] {
+    static maybeToList = <A>(ma: Maybe<A>): [] | [A] => {
         if (ma.isNothing()) {
             return [];
         }
         return [ma.value];
-    }
+    };
 
-    static catMaybes<A>(list: Array<Maybe<A>>): Array<A> {
+    static catMaybes = <A>(list: Array<Maybe<A>>): Array<A> => {
         const result: Array<A> = [];
         for (const ma of list) {
             if (ma.isJust()) {
@@ -262,72 +221,51 @@ export const MaybeStatic = class {
             }
         }
         return result;
-    }
+    };
 
-    static mapMaybe<A, B>(f: (a: A) => Maybe<B>, list: Array<A>): Array<B>;
-    static mapMaybe<A, B>(f: (a: A) => Maybe<B>): (list: Array<A>) => Array<B>;
-    static mapMaybe<A, B>(f: (a: A) => Maybe<B>, list?: Array<A>) {
-        // partial application
-        if (list === undefined) {
-            return (list: Array<A>) => MaybeStatic.mapMaybe(f, list);
-        }
-
-        const result: Array<B> = [];
-        for (const a of list) {
-            const mb = f(a);
-            if (mb.isJust()) {
-                result.push(mb.value);
+    static mapMaybe =
+        <A, B>(f: (a: A) => Maybe<B>) =>
+        (list: Array<A>): Array<B> => {
+            const result: Array<B> = [];
+            for (const a of list) {
+                const mb = f(a);
+                if (mb.isJust()) {
+                    result.push(mb.value);
+                }
             }
-        }
-        return result;
-    }
+            return result;
+        };
 
-    static of<T>(value: T | null | undefined): Maybe<T> {
+    static of = <T>(value: T | null | undefined): Maybe<T> => {
         if (value === undefined || value === null) {
             return Nothing();
         }
-        return Just(value as T);
-    }
+        return Just(value);
+    };
 
-    static match<A, B>(
-        ma: Maybe<A>,
-        matchers: { onJust: (value: A) => B; onNothing: () => B },
-    ): B {
-        if (ma.isJust()) {
-            return matchers.onJust(ma.value);
-        }
-        return matchers.onNothing();
-    }
-} satisfies MaybeStatic;
-
-export const Maybe = class MaybeConstructor<T>
-    extends MaybeStatic
-    implements MaybeInstance
-{
-    readonly type = "Maybe";
-    readonly variant: string;
-    readonly value: T;
-
-    private constructor(value: T, variant: string) {
-        super();
-        this.variant = variant;
-        this.value = value;
-    }
+    static match =
+        <A>(ma: Maybe<A>) =>
+        <B>(matchers: { Just: (value: A) => B; Nothing: () => B }): B => {
+            if (ma.isJust()) {
+                return matchers.Just(ma.value);
+            }
+            return matchers.Nothing();
+        };
 
     fmap<A, B>(this: Maybe<A>, f: (a: A) => B): Maybe<B> {
-        return Maybe.fmap(f, this);
+        return Maybe.fmap(f)(this);
     }
 
     ap<A, B>(this: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B> {
-        return Maybe.ap(ff, this);
+        return Maybe.ap(ff)(this);
     }
 
-    flatMap<A, B>(this: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> {
-        return Maybe.flatMap(this, f);
+    bind<A, B>(this: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> {
+        return Maybe.bind(this)(f);
     }
 
     maybe<A, B>(this: Maybe<A>, f: (a: A) => B, defaultValue: B): B {
-        return Maybe.maybe(defaultValue, f, this);
+        return Maybe.maybe(defaultValue)(f)(this);
     }
 
     isJust<A>(this: Maybe<A>): this is Just<A> {
@@ -348,12 +286,12 @@ export const Maybe = class MaybeConstructor<T>
 
     match<A, B>(
         this: Maybe<A>,
-        matchers: { onJust: (value: A) => B; onNothing: () => B },
+        matchers: { Just: (value: A) => B; Nothing: () => B },
     ): B {
         if (this.isJust()) {
-            return matchers.onJust(this.value);
+            return matchers.Just(this.value);
         }
-        return matchers.onNothing();
+        return matchers.Nothing();
     }
 };
 
