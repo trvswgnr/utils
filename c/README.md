@@ -1,10 +1,12 @@
 # C Utils
 
-This is a collection of C utils. It uses standard C compilation tools and Make for building and testing.
+This is a collection of C utils. It uses standard C compilation tools and Make
+for building and testing.
 
 ## Developing
 
-To compile and run the utils, make sure you have a C compiler (like gcc or clang) and Make installed on your system.
+To compile and run the utils, make sure you have a C compiler (like gcc or
+clang) and Make installed on your system.
 
 To compile all utils, run:
 
@@ -76,3 +78,14 @@ void hash_utils_init(HashTable\* table);
 3. Avoid global variables; use static variables within functions if necessary.
 4. Write clear and concise comments for functions and complex logic.
 5. Follow the principle of single responsibility for functions and modules.
+
+## Usage
+
+To use a module, copy the file into your project and include the header file.
+
+For example, to use the `string` module, copy the `string.c` and `string.h`
+files into your project and include the header file.
+
+```c
+#include "string.h"
+``` 
