@@ -4,8 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include "../vec/raw.h"
-
+#include "../vec/rawvec.h"
 
 typedef struct
 {

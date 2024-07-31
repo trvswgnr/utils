@@ -81,11 +81,12 @@ void hash_utils_init(HashTable\* table);
 
 ## Usage
 
-To use a module, copy the file into your project and include the header file.
+To use a module, simply copy the file into your project inside a folder named
+"@travvy" and include the header file.
 
-For example, to use the `string` module, copy the `string.c` and `string.h`
+For example, to use the `string` module, copy the `string.h`
 files into your project and include the header file.
 
 ```c
-#include "string.h"
+#include "@travvy/string.h"
 ``` 

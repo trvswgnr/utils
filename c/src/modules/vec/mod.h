@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "raw.h"
+#include "rawvec.h"
 
 typedef struct
 {
