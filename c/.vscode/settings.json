@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.h": "c",
+        "__bit_reference": "c",
+        "__split_buffer": "c",
+        "vector": "c"
+    },
+    // always show folders as nested, even when there's only one folder
+    "explorer.compactFolders": false
+}
