@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// Include the Vec and RawVec implementations here
 // #include "rawvec.h"
 #include "./mod.h"
 
