@@ -1,9 +1,10 @@
+import type { Args } from "~/types";
 import type * as HKT from "./hkt";
 
 export interface Semigroup<F extends HKT.Kind> extends HKT.Class<F> {
     mappend: <In, Out2, Out1, A>(
-        a: HKT.Type<F, In, Out2, Out1, A>,
-    ) => (a: HKT.Type<F, In, Out2, Out1, A>) => HKT.Type<F, In, Out2, Out1, A>;
+        a1: HKT.Type<F, In, Out2, Out1, A>,
+    ) => (a2: HKT.Type<F, In, Out2, Out1, A>) => HKT.Type<F, In, Out2, Out1, A>;
 }
 
 export interface SemigroupInstance<F extends HKT.Kind> extends HKT.Class<F> {

@@ -162,3 +162,11 @@ export type IsNonFnObject<T> = T extends object
 export type OnlyFns<T> = {
     [K in keyof T as T[K] extends AnyFn ? K : never]: T[K];
 };
+
+/**
+ * A type-level utility for creating a constructor type.
+ *
+ * @template T - The type to be constructed, defaults to any object
+ * @template A - The arguments to be passed to the constructor, defaults to []
+ */
+export type Constructor<T = {}, A extends Args = Args> = new (...args: A) => T;
