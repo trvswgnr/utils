@@ -31,6 +31,8 @@ async function publish() {
         $`git add ${jsrJsonPath}`,
         $`git add ${pkgJsonPath}`,
         $`git commit -m "chore: publish v${newVersion}"`,
+        // check if nvm command is available and use if so
+        $`command -v nvm >/dev/null 2>&1 && nvm use || echo "nvm not found, skipping nvm use"`,
         $`npm publish`,
         $`bunx jsr publish --allow-slow-types`,
         $`git tag v${newVersion}`,
