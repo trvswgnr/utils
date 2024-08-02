@@ -2,8 +2,62 @@ import { Maybe, Just, Nothing } from "./maybe";
 import { compose } from "./compose";
 import { id } from "./identity";
 import { describe, test, expect } from "bun:test";
+import { foldr, cons } from "./misc";
 
 describe("Maybe", () => {
+    describe("Semigroup", () => {
+        test("Associativity: `x <> (y <> z) = (x <> y) <> z`", () => {
+            {
+                const x = Just(1);
+                const y = Just(2);
+                const z = Just(3);
+                const l = Maybe.mappend(x)(Maybe.mappend(y)(z));
+                const r = Maybe.mappend(Maybe.mappend(x)(y))(z);
+                expect(l).toEqual(r);
+            }
+            {
+                const x = Just(1);
+                const y = Nothing<number>();
+                const z = Just(3);
+                const l = Maybe.mappend(x)(Maybe.mappend(y)(z));
+                const r = Maybe.mappend(Maybe.mappend(x)(y))(z);
+                expect(l).toEqual(r);
+            }
+            {
+                const x = Nothing<number>();
+                const y = Just(2);
+                const z = Just(3);
+                const l = Maybe.mappend(x)(Maybe.mappend(y)(z));
+                const r = Maybe.mappend(Maybe.mappend(x)(y))(z);
+                expect(l).toEqual(r);
+            }
+        });
+    });
+
+    describe("Monoid", () => {
+        test("Right identity: `x <> mempty = x`", () => {
+            const x = Just(1);
+            const l = Maybe.mappend(x)(Maybe.mempty());
+            const r = x;
+            expect(l).toEqual(r);
+        });
+        test("Left identity: `mempty <> x = x`", () => {
+            const x = Just(1);
+            const l = Maybe.mappend(Maybe.mempty())(x);
+            const r = x;
+            expect(l).toEqual(r);
+        });
+        test("Associativity: `x <> (y <> z) = (x <> y) <> z`", () => {
+            // already tested in Semigroup
+        });
+        test("Concatenation: `mconcat = foldr (<>) mempty`", () => {
+            const xs = [Just(1), Just(2), Just(3), Nothing<number>()];
+            const l = Maybe.mconcat;
+            const r = foldr(Maybe.mappend)(Maybe.mempty<number>());
+            expect(l(xs)).toEqual(r(xs));
+        });
+    });
+
     describe("Functor", () => {
         test("Identity: `fmap id = id`", () => {
             // Test with Just value
@@ -62,7 +116,7 @@ describe("Maybe", () => {
             // Test with Just value
             {
                 const v = Just(5);
-                const l = Maybe.ap(Maybe.pure(id<number>))(v);
+                const l = Maybe.apply(Maybe.pure(id<number>))(v);
                 const r = v;
                 expect(l).toEqual(r);
             }
@@ -70,7 +124,7 @@ describe("Maybe", () => {
             // Test with Nothing value
             {
                 const v = Nothing<number>();
-                const l = Maybe.ap(Maybe.pure(id<number>))(v);
+                const l = Maybe.apply(Maybe.pure(id<number>))(v);
                 const r = v;
                 expect(l).toEqual(r);
             }
@@ -86,10 +140,10 @@ describe("Maybe", () => {
                 (g: (a: number) => number) =>
                 (x: number) =>
                     f(g(x));
-            const l = Maybe.ap(Maybe.ap(Maybe.ap(Maybe.pure(compose))(u))(v))(
-                w,
-            );
-            const r = Maybe.ap(u)(Maybe.ap(v)(w));
+            const l = Maybe.apply(
+                Maybe.apply(Maybe.apply(Maybe.pure(compose))(u))(v),
+            )(w);
+            const r = Maybe.apply(u)(Maybe.apply(v)(w));
 
             expect(l).toEqual(r);
 
@@ -99,20 +153,20 @@ describe("Maybe", () => {
             const nothingW = Nothing<number>();
 
             expect(
-                Maybe.ap(Maybe.ap(Maybe.ap(Maybe.pure(compose))(nothingU))(v))(
-                    w,
-                ),
-            ).toEqual(Maybe.ap(nothingU)(Maybe.ap(v)(w)));
+                Maybe.apply(
+                    Maybe.apply(Maybe.apply(Maybe.pure(compose))(nothingU))(v),
+                )(w),
+            ).toEqual(Maybe.apply(nothingU)(Maybe.apply(v)(w)));
             expect(
-                Maybe.ap(Maybe.ap(Maybe.ap(Maybe.pure(compose))(u))(nothingV))(
-                    w,
-                ),
-            ).toEqual(Maybe.ap(u)(Maybe.ap(nothingV)(w)));
+                Maybe.apply(
+                    Maybe.apply(Maybe.apply(Maybe.pure(compose))(u))(nothingV),
+                )(w),
+            ).toEqual(Maybe.apply(u)(Maybe.apply(nothingV)(w)));
             expect(
-                Maybe.ap(Maybe.ap(Maybe.ap(Maybe.pure(compose))(u))(v))(
-                    nothingW,
-                ),
-            ).toEqual(Maybe.ap(u)(Maybe.ap(v)(nothingW)));
+                Maybe.apply(
+                    Maybe.apply(Maybe.apply(Maybe.pure(compose))(u))(v),
+                )(nothingW),
+            ).toEqual(Maybe.apply(u)(Maybe.apply(v)(nothingW)));
         });
 
         test("Homomorphism: `pure f <*> pure x = pure (f x)`", () => {
@@ -120,7 +174,7 @@ describe("Maybe", () => {
             const x = 5;
 
             {
-                const l = Maybe.ap(Maybe.pure(f))(Maybe.pure(x));
+                const l = Maybe.apply(Maybe.pure(f))(Maybe.pure(x));
                 const r = Maybe.pure(f(x));
                 expect(l).toEqual(r);
             }
@@ -130,7 +184,7 @@ describe("Maybe", () => {
             const y = "hello darkness my old friend";
 
             {
-                const l = Maybe.ap(Maybe.pure(g))(Maybe.pure(y));
+                const l = Maybe.apply(Maybe.pure(g))(Maybe.pure(y));
                 const r = Maybe.pure(g(y));
 
                 expect(l).toEqual(r);
@@ -143,8 +197,8 @@ describe("Maybe", () => {
                 const u = Just((x: number) => x * 2);
                 const y = 5;
                 const $y = (f: (x: number) => number) => f(y);
-                const l = Maybe.ap(u)(Maybe.pure(y));
-                const r = Maybe.ap(Maybe.pure($y))(u);
+                const l = Maybe.apply(u)(Maybe.pure(y));
+                const r = Maybe.apply(Maybe.pure($y))(u);
                 expect(l).toEqual(r);
             }
 
@@ -153,8 +207,8 @@ describe("Maybe", () => {
                 const u = Nothing<(x: number) => number>();
                 const y = 5;
                 const $y = (f: (x: number) => number) => f(y);
-                const l = Maybe.ap(u)(Maybe.pure(y));
-                const r = Maybe.ap(Maybe.pure($y))(u);
+                const l = Maybe.apply(u)(Maybe.pure(y));
+                const r = Maybe.apply(Maybe.pure($y))(u);
                 expect(l).toEqual(r);
             }
 
@@ -163,12 +217,34 @@ describe("Maybe", () => {
                 const u = Just((s: string) => s.length);
                 const y = "hello darkness my old friend";
                 const $y = (f: (s: string) => number) => f(y);
-                const l = Maybe.ap(u)(Maybe.pure(y));
-                const r = Maybe.ap(Maybe.pure($y))(u);
+                const l = Maybe.apply(u)(Maybe.pure(y));
+                const r = Maybe.apply(Maybe.pure($y))(u);
                 expect(l).toEqual(r);
             }
         });
     });
+
+    // describe("Alternative", () => {
+    //     test("empty", () => {
+    //         const a = Maybe.empty<number>();
+    //         const b = Nothing<number>();
+    //         expect(a).toEqual(b);
+    //     });
+    //     test("some: `some v = (:) <$> v <*> many v`", () => {
+    //         const v = Just(1);
+    //         const l = Maybe.some(v);
+    //         const r = Maybe.apply(Maybe.fmap(cons)(v))(Maybe.many(v));
+    //         console.log("l.value", l.value);
+    //         console.log("r.value", r.value);
+    //         expect(l).toEqual(r);
+    //     });
+    //     test("many: `many v = some v <|> pure []`", () => {
+    //         const v = Just(1);
+    //         const l = Maybe.many(v);
+    //         const r = Maybe.or(Maybe.some(v))(Maybe.pure([]));
+    //         expect(l).toEqual(r);
+    //     });
+    // });
 
     describe("instance works the same as static", () => {
         test("fmap", () => {
@@ -180,8 +256,8 @@ describe("Maybe", () => {
         test("ap", () => {
             const a = Just((x: number) => x + 1);
             const b = Just(2);
-            const c = Maybe.ap(a)(b);
-            const d = b.ap(a);
+            const c = Maybe.apply(a)(b);
+            const d = b.apply(a);
             expect(c).toEqual(d);
         });
         test("pure", () => {

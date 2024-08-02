@@ -3,7 +3,9 @@
         "*.h": "c",
         "__bit_reference": "c",
         "__split_buffer": "c",
-        "vector": "c"
+        "vector": "c",
+        "memory_resource": "c",
+        "typeinfo": "c"
     },
     // always show folders as nested, even when there's only one folder
     "explorer.compactFolders": false

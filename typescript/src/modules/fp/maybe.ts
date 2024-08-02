@@ -1,7 +1,6 @@
 import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
-import type { Functor, FunctorInstance } from "./functor";
-import type { Applicative, ApplicativeInstance } from "./applicative";
+import type { Monoid, MonoidInstance } from "./monoid";
 
 export interface MaybeKind extends HKT.Kind {
     readonly type: Maybe<this["Target"]>;
@@ -18,10 +17,7 @@ export interface Nothing extends MaybeInstance {
     readonly variant: "Nothing";
 }
 
-export interface MaybeStatic
-    extends Functor<MaybeKind>,
-        Applicative<MaybeKind>,
-        Monad<MaybeKind> {
+export interface MaybeStatic extends Monoid<MaybeKind>, Monad<MaybeKind> {
     /**
      * Takes a default value, a function, and a `Maybe` value. If the `Maybe`
      * value is `Nothing`, the function returns the default value. Otherwise, it
@@ -84,8 +80,7 @@ export interface MaybeStatic
 }
 
 export interface MaybeInstance
-    extends FunctorInstance<MaybeKind>,
-        ApplicativeInstance<MaybeKind>,
+    extends MonoidInstance<MaybeKind>,
         MonadInstance<MaybeKind> {
     /**
      * Takes a function, a default value. If `this` is `Nothing`, the function
@@ -126,11 +121,36 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
         this.value = value;
     }
 
+    // Semigroup
+
+    static mappend =
+        <A>(x: Maybe<A>) =>
+        (y: Maybe<A>): Maybe<A> => {
+            if (Maybe.isNothing(x)) {
+                return y;
+            }
+            return x;
+        };
+
+    // Monoid
+
+    static mempty = <A>(): Maybe<A> => Nothing<A>();
+
+    static mconcat = <A>(xs: Array<Maybe<A>>): Maybe<A> => {
+        for (const x of xs) {
+            if (Maybe.isJust(x)) {
+                return x;
+            }
+        }
+        return Nothing<A>();
+    };
+
     // Functor
+
     static fmap =
         <A, B>(f: (a: A) => B) =>
         (fa: Maybe<A>): Maybe<B> => {
-            if (fa.isNothing()) {
+            if (Maybe.isNothing(fa)) {
                 return Nothing<B>();
             }
             return Just(f(fa.value));
@@ -140,10 +160,10 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
 
     static pure = <A>(a: A): Maybe<A> => Just(a);
 
-    static ap =
+    static apply =
         <A, B>(ff: Maybe<(a: A) => B>) =>
         (fa: Maybe<A>): Maybe<B> => {
-            if (ff.isNothing() || fa.isNothing()) {
+            if (Maybe.isNothing(ff) || Maybe.isNothing(fa)) {
                 return Nothing<B>();
             }
             return Just(ff.value(fa.value));
@@ -156,7 +176,7 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
     static bind =
         <A>(ma: Maybe<A>) =>
         <B>(f: (a: A) => Maybe<B>): Maybe<B> => {
-            if (ma.isNothing()) {
+            if (Maybe.isNothing(ma)) {
                 return Nothing();
             }
             return f(ma.value);
@@ -168,7 +188,7 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
         <B>(defaultValue: B) =>
         <A>(f: (a: A) => B) =>
         (ma: Maybe<A>): B => {
-            if (ma.isNothing()) {
+            if (Maybe.isNothing(ma)) {
                 return defaultValue;
             }
             return f(ma.value);
@@ -180,7 +200,7 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
         ma.variant === "Nothing";
 
     static fromJust = <A>(ma: Maybe<A>): A => {
-        if (ma.isNothing()) {
+        if (Maybe.isNothing(ma)) {
             throw new Error("Maybe is Nothing");
         }
         return ma.value;
@@ -189,7 +209,7 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
     static fromMaybe =
         <A>(defaultValue: A) =>
         (ma: Maybe<A>): A => {
-            if (ma.isNothing()) {
+            if (Maybe.isNothing(ma)) {
                 return defaultValue;
             }
             return ma.value;
@@ -212,7 +232,7 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
     static catMaybes = <A>(list: Array<Maybe<A>>): Array<A> => {
         const result: Array<A> = [];
         for (const ma of list) {
-            if (ma.isJust()) {
+            if (Maybe.isJust(ma)) {
                 result.push(ma.value);
             }
         }
@@ -225,7 +245,7 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
             const result: Array<B> = [];
             for (const a of list) {
                 const mb = f(a);
-                if (mb.isJust()) {
+                if (Maybe.isJust(mb)) {
                     result.push(mb.value);
                 }
             }
@@ -242,18 +262,22 @@ export const Maybe = class MaybeConstructor<T> implements MaybeInstance {
     static match =
         <A>(ma: Maybe<A>) =>
         <B>(matchers: { Just: (value: A) => B; Nothing: () => B }): B => {
-            if (ma.isJust()) {
+            if (Maybe.isJust(ma)) {
                 return matchers.Just(ma.value);
             }
             return matchers.Nothing();
         };
 
+    mappend<A>(this: Maybe<A>, y: Maybe<A>): Maybe<A> {
+        return MaybeConstructor.mappend(this)(y);
+    }
+
     fmap<A, B>(this: Maybe<A>, f: (a: A) => B): Maybe<B> {
         return MaybeConstructor.fmap(f)(this);
     }
 
-    ap<A, B>(this: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B> {
-        return MaybeConstructor.ap(ff)(this);
+    apply<A, B>(this: Maybe<A>, ff: Maybe<(a: A) => B>): Maybe<B> {
+        return MaybeConstructor.apply(ff)(this);
     }
 
     bind<A, B>(this: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> {

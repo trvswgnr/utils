@@ -1,3 +1,6 @@
+#ifndef _VEC_H_INCLUDED_
+#define _VEC_H_INCLUDED_
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -12,25 +15,25 @@ typedef struct
 } Vec;
 
 // Initialize a new Vec
-Vec Vec_new(Allocator alloc)
+Vec Vec_new()
 {
     return (Vec){
-        .buf = RawVec_new(alloc),
+        .buf = RawVec_new(GLOBAL_ALLOCATOR),
         .len = 0};
 }
 
 // Create a Vec with a given capacity
-Vec Vec_with_capacity(size_t capacity, size_t elem_size, Allocator alloc)
+Vec Vec_with_capacity(size_t capacity, size_t elem_size)
 {
     return (Vec){
-        .buf = RawVec_with_capacity(capacity, elem_size, alloc),
+        .buf = RawVec_with_capacity(capacity, elem_size, GLOBAL_ALLOCATOR),
         .len = 0};
 }
 
 // Get the capacity of the Vec
-size_t Vec_capacity(const Vec *vec, size_t elem_size)
+size_t Vec_capacity(const Vec *vec)
 {
-    return RawVec_capacity(&vec->buf, elem_size);
+    return RawVec_capacity(&vec->buf);
 }
 
 // Reserve additional capacity
@@ -42,7 +45,7 @@ void Vec_reserve(Vec *vec, size_t additional, size_t elem_size)
 // Push an element to the Vec
 void Vec_push(Vec *vec, const void *value, size_t elem_size)
 {
-    if (vec->len == Vec_capacity(vec, elem_size))
+    if (vec->len == Vec_capacity(vec))
     {
         RawVec_reserve(&vec->buf, vec->len, 1, elem_size);
     }
@@ -136,3 +139,5 @@ void *Vec_as_mut_slice(Vec *vec)
 {
     return vec->buf.ptr;
 }
+
+#endif // _VEC_H_INCLUDED_

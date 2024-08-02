@@ -58,7 +58,7 @@ export type KIND = typeof KIND;
  * Represents a class that can be used with higher-kinded types
  * @template F - The Kind associated with this class
  */
-export interface Class<F extends Kind> {
+export interface Class<F> {
     readonly [KIND]?: F;
 }
 

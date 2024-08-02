@@ -1,10 +1,11 @@
+import type { Functor, FunctorInstance } from "./functor";
 import type * as HKT from "./hkt";
 
-export interface Applicative<F extends HKT.Kind> extends HKT.Class<F> {
+export interface Applicative<F extends HKT.Kind> extends Functor<F> {
     pure: <In, Out2, Out1, Target>(
         a: Target,
     ) => HKT.Type<F, In, Out2, Out1, Target>;
-    ap: <In, Out2, Out1, A, B>(
+    apply: <In, Out2, Out1, A, B>(
         ff: HKT.Type<F, In, Out2, Out1, (a: A) => B>,
     ) => (fa: HKT.Type<F, In, Out2, Out1, A>) => HKT.Type<F, In, Out2, Out1, B>;
     liftA2?: <In, Out2, Out1, A, B>(
@@ -20,8 +21,9 @@ export interface Applicative<F extends HKT.Kind> extends HKT.Class<F> {
     ) => (fb: HKT.Type<F, In, Out2, Out1, B>) => HKT.Type<F, In, Out2, Out1, A>;
 }
 
-export interface ApplicativeInstance<F extends HKT.Kind> extends HKT.Class<F> {
-    ap: <In, Out2, Out1, A, B>(
+export interface ApplicativeInstance<F extends HKT.Kind>
+    extends FunctorInstance<F> {
+    apply: <In, Out2, Out1, A, B>(
         this: HKT.Type<F, In, Out2, Out1, A>,
         ff: HKT.Type<F, In, Out2, Out1, (a: A) => B>,
     ) => HKT.Type<F, In, Out2, Out1, B>;

@@ -1,26 +1,4 @@
-#include "raw.h"
-
-// For this example, we'll use a simple allocator that uses malloc/free
-void *malloc_wrapper(size_t size)
-{
-    return malloc(size);
-}
-
-void free_wrapper(void *ptr)
-{
-    free(ptr);
-}
-
-void *realloc_wrapper(void *ptr, size_t old_size, size_t new_size)
-{
-    (void)old_size; // Unused parameter
-    return realloc(ptr, new_size);
-}
-
-Allocator global_allocator = {
-    .allocate = malloc_wrapper,
-    .deallocate = free_wrapper,
-    .reallocate = realloc_wrapper};
+#include "../modules/rawvec_generic.h"
 
 // Example struct to store in our RawVec
 typedef struct
@@ -29,7 +7,9 @@ typedef struct
     char name[50];
 } Person;
 
-void print_people(RawVec *vec, size_t len)
+define_RawVec_of(Person);
+
+void print_people(RawVec_of_Person *vec, size_t len)
 {
     Person *people = (Person *)RawVec_ptr(vec);
     for (size_t i = 0; i < len; i++)
@@ -40,15 +20,15 @@ void print_people(RawVec *vec, size_t len)
 }
 
 #define print_type(x) _Generic((x), \
-    int: "int", \
-    float: "float", \
-    double: "double", \
-    char: "char", \
+    int: "int",                     \
+    float: "float",                 \
+    double: "double",               \
+    char: "char",                   \
     default: "other")
 
 int main()
 {
-    RawVec vec = RawVec_with_capacity(2, sizeof(Person), global_allocator);
+    RawVec_of_Person vec = RawVec_with_capacity(2, sizeof(Person), GLOBAL_ALLOCATOR);
     size_t len = 0;
 
     Person people[] = {

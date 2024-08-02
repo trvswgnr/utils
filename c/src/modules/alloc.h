@@ -1,3 +1,6 @@
+#ifndef _ALLOC_H_INCLUDED_
+#define _ALLOC_H_INCLUDED_
+
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -7,12 +10,6 @@ typedef struct
     void (*deallocate)(void *ptr);
     void *(*reallocate)(void *ptr, size_t old_size, size_t new_size);
 } Allocator;
-
-// // Global allocator using standard malloc/free
-// Allocator global_allocator = {
-//     .allocate = malloc,
-//     .deallocate = free,
-//     .reallocate = realloc};
 
 // Function to create a custom allocator
 Allocator create_allocator(
@@ -32,9 +29,9 @@ void *realloc_wrapper(void *ptr, size_t old_size, size_t new_size)
     return realloc(ptr, new_size);
 }
 
-
-Allocator global_allocator = {
+Allocator GLOBAL_ALLOCATOR = {
     .allocate = malloc,
     .deallocate = free,
-    .reallocate = realloc_wrapper
-};
+    .reallocate = realloc_wrapper};
+
+#endif // _ALLOC_H_INCLUDED_
