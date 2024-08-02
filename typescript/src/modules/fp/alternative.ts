@@ -1,17 +1,37 @@
-import type { Applicative, ApplicativeInstance } from "./applicative";
+import type { RequireOne } from "~/types";
+import type { ApplicativeStatic, ApplicativeInstance } from "./applicative";
 import type * as HKT from "./hkt";
 
-export interface Alternative<F extends HKT.Kind> extends Applicative<F> {
-    empty: <In, Out2, Out1, A>() => HKT.Type<F, In, Out2, Out1, A>;
-    or: <In, Out2, Out1, A>(
+/**
+ * The minimal complete definition of Alternative
+ *
+ * {@link AlternativeStatic.empty `empty`}, {@link AlternativeStatic.or `or`}
+ * 
+ * @usage
+ * ```ts
+ * type MaybeStatic = Alternative<MaybeKind> & {
+ *   // ...
+ * }
+ * ```
+ */
+export type Alternative<F extends HKT.Kind> = RequireOne<
+    AlternativeStatic<F>,
+    "empty"
+> &
+    RequireOne<AlternativeStatic<F>, "or">;
+
+export interface AlternativeStatic<F extends HKT.Kind>
+    extends ApplicativeStatic<F> {
+    empty?: <A, Out1, Out2, In>() => HKT.Type<F, In, Out2, Out1, A>;
+    or?: <A, Out1, Out2, In>(
         fa: HKT.Type<F, In, Out2, Out1, A>,
     ) => (
         alt: HKT.Type<F, In, Out2, Out1, A>,
     ) => HKT.Type<F, In, Out2, Out1, A>;
-    some: <In, Out2, Out1, A>(
+    some?: <A, Out1, Out2, In>(
         fa: HKT.Type<F, In, Out2, Out1, A>,
     ) => HKT.Type<F, In, Out2, Out1, Array<A>>;
-    many: <In, Out2, Out1, A>(
+    many?: <A, Out1, Out2, In>(
         fa: HKT.Type<F, In, Out2, Out1, A>,
     ) => HKT.Type<F, In, Out2, Out1, Array<A>>;
 }

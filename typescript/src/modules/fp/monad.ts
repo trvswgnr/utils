@@ -1,15 +1,19 @@
-import type { Applicative, ApplicativeInstance } from "./applicative";
+import type { RequireOne } from "~/types";
+import type { ApplicativeStatic, ApplicativeInstance } from "./applicative";
 import type * as HKT from "./hkt";
-import { Just, Maybe, Nothing, type MaybeKind } from "./maybe";
 
-export interface Monad<M extends HKT.Kind> extends Applicative<M> {
-    return: <In, Out2, Out1, A>(a: A) => HKT.Type<M, In, Out2, Out1, A>;
-    bind: <In, Out2, Out1, A>(
+export type Monad<M extends HKT.Kind> = RequireOne<MonadStatic<M>, "bind">;
+
+export interface MonadStatic<M extends HKT.Kind> extends ApplicativeStatic<M> {
+    return?: <A = unknown, Out1 = unknown, Out2 = unknown, In = unknown>(
+        a: A,
+    ) => HKT.Type<M, In, Out2, Out1, A>;
+    bind?: <A = unknown, Out1 = unknown, Out2 = unknown, In = unknown>(
         ma: HKT.Type<M, In, Out2, Out1, A>,
     ) => <B>(
         f: (a: A) => HKT.Type<M, In, Out2, Out1, B>,
     ) => HKT.Type<M, In, Out2, Out1, B>;
-    then?: <In, Out2, Out1, A>(
+    then?: <A = unknown, Out1 = unknown, Out2 = unknown, In = unknown>(
         ma: HKT.Type<M, In, Out2, Out1, A>,
     ) => <B>(
         mb: HKT.Type<M, In, Out2, Out1, B>,
@@ -18,15 +22,31 @@ export interface Monad<M extends HKT.Kind> extends Applicative<M> {
 
 export interface MonadInstance<M extends HKT.Kind>
     extends ApplicativeInstance<M> {
-    bind: <In, Out2, Out1, A, B>(
+    bind: <
+        A = unknown,
+        B = unknown,
+        Out1 = unknown,
+        Out2 = unknown,
+        In = unknown,
+    >(
         this: HKT.Type<M, In, Out2, Out1, A>,
         f: (a: A) => HKT.Type<M, In, Out2, Out1, B>,
     ) => HKT.Type<M, In, Out2, Out1, B>;
-    then?: <In, Out2, Out1, A, B>(
+    then?: <
+        A = unknown,
+        B = unknown,
+        Out1 = unknown,
+        Out2 = unknown,
+        In = unknown,
+    >(
         this: HKT.Type<M, In, Out2, Out1, A>,
         mb: HKT.Type<M, In, Out2, Out1, B>,
     ) => HKT.Type<M, In, Out2, Out1, B>;
 }
 
-export const bind = <M extends HKT.Kind>(m: Monad<M>) => m.bind;
-export const then = <M extends HKT.Kind>(m: Monad<M>) => m.then;
+export const bind = <M extends HKT.Kind>(
+    m: RequireOne<MonadStatic<M>, "bind">,
+) => m.bind;
+export const then = <M extends HKT.Kind>(
+    m: RequireOne<MonadStatic<M>, "then">,
+) => m.then;

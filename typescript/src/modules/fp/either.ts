@@ -1,7 +1,7 @@
-import type { MonadInstance, Monad } from "./monad";
+import type { MonadInstance, MonadStatic } from "./monad";
 import type * as HKT from "./hkt";
-import type { Functor, FunctorInstance } from "./functor";
-import type { Applicative, ApplicativeInstance } from "./applicative";
+import type { FunctorStatic, FunctorInstance } from "./functor";
+import type { ApplicativeStatic, ApplicativeInstance } from "./applicative";
 
 export interface EitherKind extends HKT.Kind {
     readonly type: Either<this["Out1"], this["Target"]>;
@@ -34,9 +34,9 @@ export interface EitherInstance
 }
 
 export interface EitherStatic
-    extends Functor<EitherKind>,
-        Applicative<EitherKind>,
-        Monad<EitherKind> {
+    extends FunctorStatic<EitherKind>,
+        ApplicativeStatic<EitherKind>,
+        MonadStatic<EitherKind> {
     isLeft: <L, R>(e: Either<L, R>) => e is Left<L>;
     isRight: <L, R>(e: Either<L, R>) => e is Right<R>;
     match: <L, R, T>(

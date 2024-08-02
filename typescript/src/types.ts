@@ -183,3 +183,25 @@ export type RequireProperty<T, K extends keyof T> = Prettify<
         [P in K]-?: T[P];
     }
 >;
+
+export type PickRequired<T, K extends keyof T> = Pick<Required<T>, K>;
+
+export type NonEmptyArray<T> = [T, ...T[]];
+
+export type Defined<T> = T extends undefined ? never : T;
+
+export type RequireOne<T, K extends keyof T> = T &
+    {
+        [P in K]-?: { [Q in P]: Defined<T[Q]> };
+    }[K];
+
+export type RequireAll<T, K extends keyof T> = T & {
+    [P in K]-?: Defined<T[P]>;
+};
+
+export type Intersect<A = {}, B = {}, C = {}, D = {}, E = {}, F = {}> = A &
+    B &
+    C &
+    D &
+    E &
+    F;

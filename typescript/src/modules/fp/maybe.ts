@@ -1,6 +1,7 @@
 import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
-import type { Monoid, MonoidInstance } from "./monoid";
+import type { MonoidInstance, Monoid } from "./monoid";
+import type { Intersect } from "~/types";
 
 export interface MaybeKind extends HKT.Kind {
     readonly type: Maybe<this["Target"]>;
@@ -17,67 +18,73 @@ export interface Nothing extends MaybeInstance {
     readonly variant: "Nothing";
 }
 
-export interface MaybeStatic extends Monoid<MaybeKind>, Monad<MaybeKind> {
-    /**
-     * Takes a default value, a function, and a `Maybe` value. If the `Maybe`
-     * value is `Nothing`, the function returns the default value. Otherwise, it
-     * applies the function to the value inside the `Just` and returns the
-     * result.
-     */
-    maybe: <B>(defaultValue: B) => <A>(f: (a: A) => B) => (ma: Maybe<A>) => B;
-    /**
-     * Checks if the `Maybe` is `Just`.
-     */
-    isJust<A>(ma: Maybe<A>): ma is Just<A>;
-    /**
-     * Checks if the `Maybe` is `Nothing`.
-     */
-    isNothing<A>(ma: Maybe<A>): ma is Nothing;
-    /**
-     * Extracts the element out of a `Just` and throws an error if its argument
-     * is `Nothing`.
-     * @throws {Error} if the `Maybe` is `Nothing`
-     */
-    fromJust<A>(ma: Maybe<A>): A;
-    /**
-     * Takes a default value and a `Maybe` value. If the `Maybe` is `Nothing`,
-     * it returns the default value; otherwise, it returns the value contained
-     * in the `Maybe`.
-     */
-    fromMaybe: <A>(defaultValue: A) => (ma: Maybe<A>) => A;
-    /**
-     * Returns `Nothing` on an empty list or `Just<A>` where `A` is the first
-     * element of the list.
-     */
-    listToMaybe<A>(list: Array<A>): Maybe<A>;
-    /**
-     * Returns an empty list when given `Nothing` or a singleton list when given
-     * `Just`.
-     */
-    maybeToList<A>(ma: Maybe<A>): [] | [A];
-    /**
-     * Takes a list of `Maybe`s and returns a list of all the `Just` values.
-     */
-    catMaybes<A>(list: Array<Maybe<A>>): Array<A>;
-    /**
-     * A version of `map` which can throw out elements. In particular, the
-     * functional argument returns something of type `Maybe<B>`. If this is
-     * `Nothing`, no element is added on to the result list. If it is `Just<B>`,
-     * then `B` is included in the result list.
-     */
-    mapMaybe: <A, B>(f: (a: A) => Maybe<B>) => (list: Array<A>) => Array<B>;
-    /**
-     * Creates a `Maybe` from a value. If the value is `null` or `undefined`, it
-     * returns `Nothing`. Otherwise, it returns `Just(value)`.
-     */
-    of<T>(value: T | null | undefined): Maybe<T>;
-    /**
-     * Match a `Maybe` value with a function.
-     */
-    match: <A, B>(
-        ma: Maybe<A>,
-    ) => (matchers: { Just: (value: A) => B; Nothing: () => B }) => B;
-}
+export type MaybeStatic = Intersect<
+    Monoid<MaybeKind>,
+    Monad<MaybeKind>,
+    {
+        /**
+         * Takes a default value, a function, and a `Maybe` value. If the `Maybe`
+         * value is `Nothing`, the function returns the default value. Otherwise, it
+         * applies the function to the value inside the `Just` and returns the
+         * result.
+         */
+        maybe: <B>(
+            defaultValue: B,
+        ) => <A>(f: (a: A) => B) => (ma: Maybe<A>) => B;
+        /**
+         * Checks if the `Maybe` is `Just`.
+         */
+        isJust<A>(ma: Maybe<A>): ma is Just<A>;
+        /**
+         * Checks if the `Maybe` is `Nothing`.
+         */
+        isNothing<A>(ma: Maybe<A>): ma is Nothing;
+        /**
+         * Extracts the element out of a `Just` and throws an error if its argument
+         * is `Nothing`.
+         * @throws {Error} if the `Maybe` is `Nothing`
+         */
+        fromJust<A>(ma: Maybe<A>): A;
+        /**
+         * Takes a default value and a `Maybe` value. If the `Maybe` is `Nothing`,
+         * it returns the default value; otherwise, it returns the value contained
+         * in the `Maybe`.
+         */
+        fromMaybe: <A>(defaultValue: A) => (ma: Maybe<A>) => A;
+        /**
+         * Returns `Nothing` on an empty list or `Just<A>` where `A` is the first
+         * element of the list.
+         */
+        listToMaybe<A>(list: Array<A>): Maybe<A>;
+        /**
+         * Returns an empty list when given `Nothing` or a singleton list when given
+         * `Just`.
+         */
+        maybeToList<A>(ma: Maybe<A>): [] | [A];
+        /**
+         * Takes a list of `Maybe`s and returns a list of all the `Just` values.
+         */
+        catMaybes<A>(list: Array<Maybe<A>>): Array<A>;
+        /**
+         * A version of `map` which can throw out elements. In particular, the
+         * functional argument returns something of type `Maybe<B>`. If this is
+         * `Nothing`, no element is added on to the result list. If it is `Just<B>`,
+         * then `B` is included in the result list.
+         */
+        mapMaybe: <A, B>(f: (a: A) => Maybe<B>) => (list: Array<A>) => Array<B>;
+        /**
+         * Creates a `Maybe` from a value. If the value is `null` or `undefined`, it
+         * returns `Nothing`. Otherwise, it returns `Just(value)`.
+         */
+        of<T>(value: T | null | undefined): Maybe<T>;
+        /**
+         * Match a `Maybe` value with a function.
+         */
+        match: <A, B>(
+            ma: Maybe<A>,
+        ) => (matchers: { Just: (value: A) => B; Nothing: () => B }) => B;
+    }
+>;
 
 export interface MaybeInstance
     extends MonoidInstance<MaybeKind>,
