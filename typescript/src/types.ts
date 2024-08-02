@@ -170,3 +170,16 @@ export type OnlyFns<T> = {
  * @template A - The arguments to be passed to the constructor, defaults to []
  */
 export type Constructor<T = {}, A extends Args = Args> = new (...args: A) => T;
+
+/**
+ * Forces TS to show the type without aliases.
+ */
+export type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
+
+export type RequireProperty<T, K extends keyof T> = Prettify<
+    T & {
+        [P in K]-?: T[P];
+    }
+>;

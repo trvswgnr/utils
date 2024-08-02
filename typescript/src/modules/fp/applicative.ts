@@ -41,3 +41,10 @@ export interface ApplicativeInstance<F extends HKT.Kind>
         fb: HKT.Type<F, In, Out2, Out1, B>,
     ) => HKT.Type<F, In, Out2, Out1, A>;
 }
+
+export const pure = <F extends HKT.Kind>(a: Applicative<F>) => a.pure;
+export const apply = <F extends HKT.Kind>(a: Applicative<F>) => a.apply;
+export const liftA2 = <F extends HKT.Kind>(a: Applicative<F>) => a.liftA2;
+export const applyRight = <F extends HKT.Kind>(a: Applicative<F>) =>
+    a.applyRight;
+export const applyLeft = <F extends HKT.Kind>(a: Applicative<F>) => a.applyLeft;

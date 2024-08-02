@@ -27,6 +27,9 @@
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false,
         "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+        "useUnknownInCatchVariables": true,
+        "noImplicitOverride": true,
 
         "paths": {
             "~/*": ["./src/*"]

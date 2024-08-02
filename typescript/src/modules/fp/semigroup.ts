@@ -1,4 +1,4 @@
-import type { Args } from "~/types";
+import type { Constructor } from "~/types";
 import type * as HKT from "./hkt";
 
 export interface Semigroup<F extends HKT.Kind> extends HKT.Class<F> {
@@ -14,8 +14,12 @@ export interface SemigroupInstance<F extends HKT.Kind> extends HKT.Class<F> {
     ) => HKT.Type<F, In, Out2, Out1, A>;
 }
 
-export const mappend =
-    <F extends HKT.Kind>(s: Semigroup<F>) =>
-    <In, Out2, Out1, Target>(a: HKT.Type<F, In, Out2, Out1, Target>) =>
-    (b: HKT.Type<F, In, Out2, Out1, Target>) =>
-        s.mappend(a)(b);
+export const mappend = <F extends HKT.Kind>(s: Semigroup<F>) => s.mappend;
+
+export const implSemigroup =
+    <F extends HKT.Kind>(semigroup: Semigroup<F>) =>
+    <TBase extends Constructor>(Base: TBase) => {
+        return class Semigroup extends Base {
+            static mappend = semigroup.mappend;
+        };
+    };

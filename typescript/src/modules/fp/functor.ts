@@ -12,3 +12,5 @@ export interface FunctorInstance<F extends HKT.Kind> extends HKT.Class<F> {
         f: (a: A) => B,
     ) => HKT.Type<F, In, Out2, Out1, B>;
 }
+
+export const fmap = <F extends HKT.Kind>(f: Functor<F>) => f.fmap;
