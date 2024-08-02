@@ -1,0 +1,14 @@
+[package]
+name = "travvy-utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[lib]
+name = "travvy_utils"
+path = "src/lib.rs"
+
+[[bin]]
+name = "travvy_utils_cli"
+path = "src/main.rs"
