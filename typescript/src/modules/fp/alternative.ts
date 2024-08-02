@@ -1,12 +1,12 @@
+import type * as HKT from "./hkt";
 import type { RequireOne } from "~/types";
 import type { ApplicativeStatic, ApplicativeInstance } from "./applicative";
-import type * as HKT from "./hkt";
 
 /**
  * The minimal complete definition of Alternative
  *
  * {@link AlternativeStatic.empty `empty`}, {@link AlternativeStatic.or `or`}
- * 
+ *
  * @usage
  * ```ts
  * type MaybeStatic = Alternative<MaybeKind> & {

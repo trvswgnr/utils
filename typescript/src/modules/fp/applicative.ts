@@ -1,6 +1,6 @@
+import type * as HKT from "./hkt";
 import type { RequireOne } from "~/types";
 import type { FunctorStatic, FunctorInstance } from "./functor";
-import type * as HKT from "./hkt";
 
 /**
  * Minimal complete definition of Applicative

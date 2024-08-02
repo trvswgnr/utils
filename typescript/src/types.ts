@@ -1,5 +1,3 @@
-import type * as HKT from "./modules/fp/hkt";
-
 /**
  * A collection of useful type-level utilities
  *
