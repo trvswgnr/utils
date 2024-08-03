@@ -8,6 +8,7 @@ import {
     type JsrJson,
     type PackageJson,
 } from "./utils";
+import { Ordering } from "../src/modules/misc/ordering";
 
 await publish();
 
@@ -19,12 +20,41 @@ async function publish() {
 
     const [major, minor, patch] = jsrJson.version.split(".");
     const newPatchVersion = Number(patch) + 1;
-    const newVersion = `${major}.${minor}.${newPatchVersion}`;
+    const newVersion = SemVer.unsafe_parse(
+        `${major}.${minor}.${newPatchVersion}`,
+    );
 
-    jsrJson.version = newVersion;
-    pkgJson.version = newVersion;
+    jsrJson.version = SemVer.toString(newVersion);
+    pkgJson.version = SemVer.toString(newVersion);
 
     await checkGitState();
+
+    const logFile = pathFromRoot("published.json");
+    const defaultLog = {
+        jsr: {
+            version: "0.0.0",
+            date: new Date().toISOString(),
+        },
+        npm: {
+            version: "0.0.0",
+            date: new Date().toISOString(),
+        },
+    };
+    const logRaw = await readJson(logFile).catch(() => defaultLog);
+    const log = unsafe_parsePublishedLog(logRaw);
+    const currentNpmVersion = log.npm.version;
+    const currentJsrVersion = log.jsr.version;
+
+    const publish_npm =
+        SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less
+            ? $`npm publish`.then(() => updateNpmLog(pkgJson.version))
+            : Promise.resolve();
+    const publish_jsr =
+        SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less
+            ? $`bunx jsr publish --allow-slow-types`.then(() =>
+                  updateJsrLog(pkgJson.version),
+              )
+            : Promise.resolve();
 
     await runAllCommandsSync([
         $`bun run build`,
@@ -35,8 +65,8 @@ async function publish() {
         $`git commit -m "chore: publish v${newVersion}"`,
         // check if nvm command is available and use if so
         $`command -v nvm && nvm use || echo "nvm not found, skipping nvm use"`,
-        $`npm publish`,
-        $`bunx jsr publish --allow-slow-types`,
+        publish_npm,
+        publish_jsr,
         $`git tag v${newVersion}`,
         $`git push`,
         $`git push --tags`,
@@ -86,33 +116,6 @@ async function checkGitState() {
     }
 }
 
-async function updatePublishedLog() {
-    const jsrJsonPath = pathFromRoot("jsr.json");
-    const jsrJson = await readJson<JsrJson>(jsrJsonPath);
-    const pkgJsonPath = pathFromRoot("package.json");
-    const pkgJson = await readJson<PackageJson>(pkgJsonPath);
-
-    const publishedLogPath = pathFromRoot("published.json");
-    const publishedLogRaw = await readJson(publishedLogPath);
-    const publishedLog = unsafe_parsePublishedLog(publishedLogRaw);
-
-    const jsr = {
-        version: jsrJson.version,
-        date: new Date(),
-    };
-    const npm = {
-        version: pkgJson.version,
-        date: new Date(),
-    };
-
-    const newPublishedLog = {
-        jsr,
-        npm,
-    };
-
-    await writeJson(publishedLogPath, newPublishedLog);
-}
-
 type PublishedLog = {
     jsr: {
         version: SemVer;
@@ -158,4 +161,34 @@ function unsafe_parsePublishedLog(publishedLogRaw: JsonValue): PublishedLog {
     };
 
     return { jsr, npm };
+}
+
+async function updateNpmLog(version: string) {
+    const publishedLogPath = pathFromRoot("published.json");
+    const publishedLogRaw = await readJson(publishedLogPath);
+    const publishedLog = unsafe_parsePublishedLog(publishedLogRaw);
+    const npm = {
+        version,
+        date: new Date(),
+    };
+    const newPublishedLog = {
+        ...publishedLog,
+        npm,
+    };
+    await writeJson(
+        publishedLogPath,
+        JSON.parse(JSON.stringify(newPublishedLog)),
+    );
+}
+
+async function updateJsrLog(version: string) {
+    const jsrLogPath = pathFromRoot("jsr.json");
+    const jsrLogRaw = await readJson(jsrLogPath);
+    const jsrLog = unsafe_parsePublishedLog(jsrLogRaw);
+    const newJsrLog = {
+        ...jsrLog,
+        version,
+        date: new Date(),
+    };
+    await writeJson(jsrLogPath, JSON.parse(JSON.stringify(newJsrLog)));
 }

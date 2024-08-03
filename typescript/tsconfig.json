@@ -31,8 +31,8 @@
         "useUnknownInCatchVariables": true,
         "noImplicitOverride": true,
 
-        "paths": {
-            "~/*": ["./src/*"]
-        }
+        // "paths": {
+        //     "~/*": ["./src/*"]
+        // }
     }
 }
