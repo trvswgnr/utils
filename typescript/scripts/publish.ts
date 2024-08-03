@@ -10,10 +10,10 @@ import {
 } from "./utils";
 import { Ordering } from "../src/modules/misc/ordering";
 
-await publish();
-
 let jsrWasPublished = false;
 let npmWasPublished = false;
+
+await publish();
 
 async function publish() {
     const jsrJsonPath = pathFromRoot("jsr.json");
