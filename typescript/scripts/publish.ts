@@ -82,7 +82,7 @@ async function publish() {
         await $`git push`;
         await $`git push --tags`;
     };
-    runAll().catch(async (e) => {
+    await runAll().catch(async (e) => {
         console.error("\nerror publishing, rolling back...\n");
         const prevVersion = `${major}.${minor}.${Number(newPatchVersion) - 1}`;
 
