@@ -83,7 +83,10 @@ export namespace SemVer {
      *
      * @throws a {@link SemVer.Error} if the string is not a valid semver string
      */
-    export function unsafe_parse(x: string): SemVer {
+    export function unsafe_parse(x: unknown): SemVer {
+        if (typeof x !== "string") {
+            throw new SemVer.Error(`Expected a string, got ${typeof x}`);
+        }
         const match = x.match(SemVer.regex);
 
         validateMatch(match);

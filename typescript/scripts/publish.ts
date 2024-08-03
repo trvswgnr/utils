@@ -4,6 +4,7 @@ import {
     pathFromRoot,
     readJson,
     writeJson,
+    commandOutput,
     type JsonValue,
     type JsrJson,
     type PackageJson,
@@ -27,6 +28,9 @@ async function publish() {
         `${major}.${minor}.${newPatchVersion}`,
     );
 
+    // check the node version
+    await checkNodeVersion();
+
     jsrJson.version = SemVer.toString(newVersion);
     pkgJson.version = SemVer.toString(newVersion);
 
@@ -49,15 +53,22 @@ async function publish() {
     const currentJsrVersion = log.jsr.version;
 
     const runAll = async () => {
-        await $`bun run build`;
-        await writeJson(jsrJsonPath, jsrJson);
-        await writeJson(pkgJsonPath, pkgJson);
-        await $`git add ${jsrJsonPath}`;
-        await $`git add ${pkgJsonPath}`;
-        await $`git commit -m "chore: publish v${newVersion}"`;
-        // check if nvm command is available and use if so
-        await $`nvm use`;
-
+        await $`bun run build`.then(() => console.log("built"));
+        await writeJson(jsrJsonPath, jsrJson).then(() =>
+            console.log("wrote jsr.json"),
+        );
+        await writeJson(pkgJsonPath, pkgJson).then(() =>
+            console.log("wrote package.json"),
+        );
+        await $`git add ${jsrJsonPath}`.then(() =>
+            console.log("added jsr.json"),
+        );
+        await $`git add ${pkgJsonPath}`.then(() =>
+            console.log("added package.json"),
+        );
+        await $`git commit -m "chore: publish v${newVersion}"`
+            .then(() => console.log("committed"))
+            .catch(() => console.log("no changes to commit"));
         if (SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less) {
             await $`npm publish`.then(
                 async () => await updateNpmLog(pkgJson.version),
@@ -206,4 +217,18 @@ async function updateJsrLog(version: string) {
 
     await $`git add -A && git commit --amend -m "chore: publish v${version}"`;
     jsrWasPublished = true;
+}
+
+async function checkNodeVersion() {
+    const nodeVersionRaw = (await commandOutput`node -v`)?.replace("v", "");
+    const nodeVersion = SemVer.unsafe_parse(nodeVersionRaw);
+    const minNodeVersionRaw = "18.13.0";
+    const minNodeVersion = SemVer.unsafe_parse(minNodeVersionRaw);
+
+    if (SemVer.compare(nodeVersion, minNodeVersion) === Ordering.Less) {
+        console.error(
+            `node version ${nodeVersionRaw} is less than the minimum required version ${minNodeVersionRaw}`,
+        );
+        process.exit(1);
+    }
 }

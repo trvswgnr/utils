@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import { $, type ShellExpression, type ShellPromise } from "bun";
 
 export const PACKAGE_NAME = "@travvy/utils";
 
@@ -116,10 +117,24 @@ export async function getConfirmation(message: string): Promise<boolean> {
     throw new Error("no confirmation received");
 }
 
-export async function exec(cmd: string): Promise<number> {
-    const { exited, exitCode } = Bun.spawn(cmd.split(" "));
-    await exited;
-    return exitCode ?? 69;
+export async function exec(cmd: string, quiet = true): Promise<number> {
+    const p = Bun.spawn(cmd.split(" "), {
+        stdout: "pipe",
+        stderr: "pipe",
+    });
+    const stdout: ReadableStream<Uint8Array> = p.stdout;
+    const stderr: ReadableStream<Uint8Array> = p.stderr;
+
+    if (!quiet) {
+        for (const chunk of await Bun.readableStreamToArray(stdout)) {
+            process.stdout.write(chunk);
+        }
+        for (const chunk of await Bun.readableStreamToArray(stderr)) {
+            process.stderr.write(chunk);
+        }
+    }
+    await p.exited;
+    return p.exitCode ?? 69;
 }
 
 export type TsUpConfig = {
@@ -160,4 +175,17 @@ export function exitAfter(fn: unknown, exitCode = 0): never {
         fn();
     }
     process.exit(exitCode);
+}
+
+export async function commandOutput(
+    strings: TemplateStringsArray,
+    ...expressions: ShellExpression[]
+): Promise<string | null> {
+    try {
+        return await $(strings, ...expressions)
+            .quiet()
+            .then((e) => e.text().trim());
+    } catch (e) {
+        return null;
+    }
 }
