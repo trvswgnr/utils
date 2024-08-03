@@ -22,9 +22,6 @@ interface PublishedLog {
     };
 }
 
-let jsrWasPublished = false;
-let npmWasPublished = false;
-
 async function main() {
     try {
         await publish();
@@ -96,34 +93,34 @@ async function commitChanges(newVersion: SemVer) {
 async function publishIfNecessary(log: PublishedLog, newVersion: SemVer) {
     if (SemVer.compare(log.npm.version, newVersion) === Ordering.Less) {
         await $`npm publish`.then(() =>
-            updateNpmLog(SemVer.toString(newVersion)),
+            updatePublishLog("npm", SemVer.toString(newVersion)),
         );
     } else {
         console.log("npm version is up to date, skipping npm publish");
     }
 
     if (SemVer.compare(log.jsr.version, newVersion) === Ordering.Less) {
-        await $`bunx jsr publish --allow-slow-types`.then(() =>
-            updateJsrLog(SemVer.toString(newVersion)),
-        );
+        await $`bunx jsr publish --allow-slow-types`
+            .nothrow()
+            .then(() => updatePublishLog("jsr", SemVer.toString(newVersion)));
     } else {
         console.log("jsr version is up to date, skipping jsr publish");
     }
 }
 
 async function pushChanges(newVersion: SemVer) {
-    await $`git tag ${SemVer.toString(newVersion)}`;
-    await $`git push`;
-    await $`git push --tags`;
+    await $`git tag ${SemVer.toString(newVersion)}`.nothrow();
+    await $`git push`.nothrow();
+    await $`git push --tags`.nothrow();
 }
 
 async function checkGitState() {
-    const branch = await $`git branch --show-current`.text();
+    const branch = await $`git branch --show-current`.nothrow().text();
     if (branch.trim() !== "main") {
         throw new Error("Not on main branch, aborting publish");
     }
 
-    const status = await $`git status --porcelain`.text();
+    const status = await $`git status --porcelain`.nothrow().text();
     if (status.trim()) {
         throw new Error("There are uncommitted changes, aborting publish");
     }
@@ -157,16 +154,6 @@ function isValidPublishedLog(log: any): log is Required<PublishedLog> {
         typeof log.npm.version === "string" &&
         typeof log.npm.date === "string"
     );
-}
-
-async function updateNpmLog(version: string) {
-    await updatePublishLog("npm", version);
-    npmWasPublished = true;
-}
-
-async function updateJsrLog(version: string) {
-    await updatePublishLog("jsr", version);
-    jsrWasPublished = true;
 }
 
 async function updatePublishLog(type: "npm" | "jsr", version: string) {
