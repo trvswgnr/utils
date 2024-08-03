@@ -53,7 +53,7 @@ async function publish() {
         $`git add ${pkgJsonPath}`,
         $`git commit -m "chore: publish v${newVersion}"`,
         // check if nvm command is available and use if so
-        $`which nvm && nvm use || echo "nvm not found, skipping nvm use"`,
+        $`nvm use`,
         SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less
             ? $`npm publish`.then(() => updateNpmLog(pkgJson.version))
             : Promise.resolve(),
