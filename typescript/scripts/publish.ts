@@ -48,43 +48,40 @@ async function publish() {
     const currentNpmVersion = log.npm.version;
     const currentJsrVersion = log.jsr.version;
 
-    await runAllCommandsSync([
-        $`bun run build`,
-        writeJson(jsrJsonPath, jsrJson),
-        writeJson(pkgJsonPath, pkgJson),
-        $`git add ${jsrJsonPath}`,
-        $`git add ${pkgJsonPath}`,
-        $`git commit -m "chore: publish v${newVersion}"`,
+    const runAll = async () => {
+        await $`bun run build`;
+        await writeJson(jsrJsonPath, jsrJson);
+        await writeJson(pkgJsonPath, pkgJson);
+        await $`git add ${jsrJsonPath}`;
+        await $`git add ${pkgJsonPath}`;
+        await $`git commit -m "chore: publish v${newVersion}"`;
         // check if nvm command is available and use if so
-        $`nvm use`,
+        await $`nvm use`;
         SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less
-            ? $`npm publish`.then(() => updateNpmLog(pkgJson.version))
-            : Promise.resolve(),
-        SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less
-            ? $`bunx jsr publish --allow-slow-types`.then(() =>
-                  updateJsrLog(pkgJson.version),
+            ? await $`npm publish`.then(
+                  async () => await updateNpmLog(pkgJson.version),
               )
-            : Promise.resolve(),
-        $`git tag v${newVersion}`,
-        $`git push`,
-        $`git push --tags`,
-    ]).catch(async (e) => {
+            : void 0;
+        SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less
+            ? await $`bunx jsr publish --allow-slow-types`.then(
+                  async () => await updateJsrLog(pkgJson.version),
+              )
+            : void 0;
+        await $`git tag v${newVersion}`;
+        await $`git push`;
+        await $`git push --tags`;
+    };
+    runAll().catch(async (e) => {
         console.error("\nerror publishing, rolling back...\n");
         const prevVersion = `${major}.${minor}.${Number(newPatchVersion) - 1}`;
 
         jsrJson.version = prevVersion;
         pkgJson.version = prevVersion;
 
-        await runAllCommandsSync([
-            jsrWasPublished
-                ? Promise.resolve()
-                : writeJson(jsrJsonPath, jsrJson),
-            npmWasPublished
-                ? Promise.resolve()
-                : writeJson(pkgJsonPath, pkgJson),
-            // reset to last commit
-            $`git add ${jsrJsonPath} ${pkgJsonPath} && git commit -m "rollback failed publish"`,
-        ]);
+        jsrWasPublished ? void 0 : await writeJson(jsrJsonPath, jsrJson);
+        npmWasPublished ? void 0 : await writeJson(pkgJsonPath, pkgJson);
+        // reset to last commit
+        await $`git add -A && git commit -m "rollback failed publish"`;
     });
 }
 
@@ -181,7 +178,7 @@ async function updateNpmLog(version: string) {
     };
     await writeJson(publishedLogPath, newPublishedLog);
 
-    await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
+    await $`git add -A && git commit --amend -m "chore: publish v${version}"`;
     npmWasPublished = true;
 }
 
@@ -202,6 +199,6 @@ async function updateJsrLog(version: string) {
     };
     await writeJson(publishedLogPath, newPublishedLog);
 
-    await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
+    await $`git add -A && git commit --amend -m "chore: publish v${version}"`;
     jsrWasPublished = true;
 }
