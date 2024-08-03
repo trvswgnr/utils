@@ -174,16 +174,26 @@ async function updateNpmLog(version: string) {
         publishedLogPath,
         JSON.parse(JSON.stringify(newPublishedLog)),
     );
+
+    await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
 }
 
 async function updateJsrLog(version: string) {
-    const jsrLogPath = pathFromRoot("jsr.json");
-    const jsrLogRaw = await readJson(jsrLogPath);
-    const jsrLog = unsafe_parsePublishedLog(jsrLogRaw);
-    const newJsrLog = {
-        ...jsrLog,
+    const publishedLogPath = pathFromRoot("published.json");
+    const publishedLogRaw = await readJson(publishedLogPath);
+    const publishedLog = unsafe_parsePublishedLog(publishedLogRaw);
+    const jsr = {
         version,
         date: new Date(),
     };
-    await writeJson(jsrLogPath, JSON.parse(JSON.stringify(newJsrLog)));
+    const newPublishedLog = {
+        ...publishedLog,
+        jsr,
+    };
+    await writeJson(
+        publishedLogPath,
+        JSON.parse(JSON.stringify(newPublishedLog)),
+    );
+
+    await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
 }
