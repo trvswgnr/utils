@@ -12,6 +12,9 @@ import { Ordering } from "../src/modules/misc/ordering";
 
 await publish();
 
+let jsrWasPublished = false;
+let npmWasPublished = false;
+
 async function publish() {
     const jsrJsonPath = pathFromRoot("jsr.json");
     const jsrJson = await readJson<JsrJson>(jsrJsonPath);
@@ -73,11 +76,14 @@ async function publish() {
         pkgJson.version = prevVersion;
 
         await runAllCommandsSync([
-            writeJson(jsrJsonPath, jsrJson),
-            writeJson(pkgJsonPath, pkgJson),
+            jsrWasPublished
+                ? Promise.resolve()
+                : writeJson(jsrJsonPath, jsrJson),
+            npmWasPublished
+                ? Promise.resolve()
+                : writeJson(pkgJsonPath, pkgJson),
             // reset to last commit
-            $`git reset HEAD~`,
-            $`git checkout -- ${jsrJsonPath} ${pkgJsonPath}`,
+            $`git add ${jsrJsonPath} ${pkgJsonPath} && git commit -m "rollback failed publish"`,
         ]);
     });
 }
@@ -176,6 +182,7 @@ async function updateNpmLog(version: string) {
     );
 
     await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
+    npmWasPublished = true;
 }
 
 async function updateJsrLog(version: string) {
@@ -196,4 +203,5 @@ async function updateJsrLog(version: string) {
     );
 
     await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
+    jsrWasPublished = true;
 }
