@@ -59,10 +59,7 @@ async function publish() {
         console.log("wrote jsr.json");
         await writeJson(pkgJsonPath, pkgJson);
         console.log("wrote package.json");
-        await $`git add ${jsrJsonPath}`;
-        console.log("added jsr.json");
-        await $`git add ${pkgJsonPath}`;
-        console.log("added package.json");
+        await $`git add -A`;
         await $`git commit -m "chore: publish v${newVersion}"`
             .then(() => console.log("committed"))
             .catch(() => console.log("no changes to commit"));
