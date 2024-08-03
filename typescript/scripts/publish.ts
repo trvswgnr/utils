@@ -53,19 +53,16 @@ async function publish() {
     const currentJsrVersion = log.jsr.version;
 
     const runAll = async () => {
-        await $`bun run build`.then(() => console.log("built"));
-        await writeJson(jsrJsonPath, jsrJson).then(() =>
-            console.log("wrote jsr.json"),
-        );
-        await writeJson(pkgJsonPath, pkgJson).then(() =>
-            console.log("wrote package.json"),
-        );
-        await $`git add ${jsrJsonPath}`.then(() =>
-            console.log("added jsr.json"),
-        );
-        await $`git add ${pkgJsonPath}`.then(() =>
-            console.log("added package.json"),
-        );
+        await $`bun run build`;
+        console.log("built");
+        await writeJson(jsrJsonPath, jsrJson);
+        console.log("wrote jsr.json");
+        await writeJson(pkgJsonPath, pkgJson);
+        console.log("wrote package.json");
+        await $`git add ${jsrJsonPath}`;
+        console.log("added jsr.json");
+        await $`git add ${pkgJsonPath}`;
+        console.log("added package.json");
         await $`git commit -m "chore: publish v${newVersion}"`
             .then(() => console.log("committed"))
             .catch(() => console.log("no changes to commit"));
