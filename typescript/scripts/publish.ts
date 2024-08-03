@@ -57,16 +57,21 @@ async function publish() {
         await $`git commit -m "chore: publish v${newVersion}"`;
         // check if nvm command is available and use if so
         await $`nvm use`;
-        SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less
-            ? await $`npm publish`.then(
-                  async () => await updateNpmLog(pkgJson.version),
-              )
-            : void 0;
-        SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less
-            ? await $`bunx jsr publish --allow-slow-types`.then(
-                  async () => await updateJsrLog(pkgJson.version),
-              )
-            : void 0;
+
+        if (SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less) {
+            await $`npm publish`.then(
+                async () => await updateNpmLog(pkgJson.version),
+            );
+        } else {
+            console.log("npm version is up to date, skipping npm publish");
+        }
+        if (SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less) {
+            await $`bunx jsr publish --allow-slow-types`.then(
+                async () => await updateJsrLog(pkgJson.version),
+            );
+        } else {
+            console.log("jsr version is up to date, skipping jsr publish");
+        }
         await $`git tag v${newVersion}`;
         await $`git push`;
         await $`git push --tags`;
