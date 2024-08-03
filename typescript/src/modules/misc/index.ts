@@ -1,4 +1,4 @@
-import type { Identity } from "../fp/identity";
+import type { Branded } from "~/types";
 
 export { fetchJson } from "./fetchJson";
 
@@ -27,9 +27,6 @@ export { fetchJson } from "./fetchJson";
 export function cast<T = never>(input: unknown): T {
     return input as T;
 }
-
-declare const BRAND: unique symbol;
-export type Branded<T, Brand> = T & { [BRAND]: Brand };
 
 export type UInt32 = Branded<number, "UInt32">;
 export function UInt32(n: number): UInt32 {

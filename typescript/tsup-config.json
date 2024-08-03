@@ -11,7 +11,8 @@
         "hash": "src/modules/hash/index.ts",
         "effect": "src/modules/effect/index.ts",
         "either": "src/modules/either/index.ts",
-        "fp": "src/modules/fp/index.ts"
+        "fp": "src/modules/fp/index.ts",
+        "numbers": "src/modules/numbers/index.ts"
     },
     "outDir": "dist",
     "dts": true,

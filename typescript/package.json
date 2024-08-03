@@ -1,6 +1,6 @@
 {
     "name": "@travvy/utils",
-    "version": "0.0.27",
+    "version": "0.0.28",
     "main": "dist/index.js",
     "type": "module",
     "exports": {
@@ -35,6 +35,10 @@
         "./fp": {
             "import": "./dist/fp.js",
             "require": "./dist/fp.cjs"
+        },
+        "./numbers": {
+            "import": "./dist/numbers.js",
+            "require": "./dist/numbers.cjs"
         }
     },
     "files": [

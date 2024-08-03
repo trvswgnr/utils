@@ -108,10 +108,31 @@ namespace Result {
         return r instanceof Error;
     }
 
+    export function of<E extends Error>(ErrConstructor: {
+        from: (e: unknown) => E;
+    }): <A extends readonly any[], R>(
+        fn: (...args: A) => Ok<R>,
+        ...args: A
+    ) => Result<R, E>;
     export function of<A extends readonly any[], R>(
         fn: (...args: A) => Ok<R>,
         ...args: A
-    ): Result<R, Error> {
+    ): Result<R, Error>;
+    export function of(...args: any[]) {
+        if (args.length === 1) {
+            const ErrConstructor = args[0];
+            return <A extends readonly any[], R>(
+                fn: (...args: A) => Ok<R>,
+                ...args: A
+            ) => {
+                try {
+                    return fn(...args);
+                } catch (e) {
+                    return ErrConstructor.from(e);
+                }
+            };
+        }
+        const fn = args[0];
         try {
             return fn(...args);
         } catch (e) {

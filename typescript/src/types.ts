@@ -203,3 +203,6 @@ export type Intersect<A = {}, B = {}, C = {}, D = {}, E = {}, F = {}> = A &
     D &
     E &
     F;
+
+declare const BRAND: unique symbol;
+export type Branded<T, Brand> = T & { [BRAND]: Brand };

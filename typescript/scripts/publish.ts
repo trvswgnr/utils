@@ -1,8 +1,10 @@
+import { SemVer } from "../src/modules/misc/semver";
 import { $ } from "bun";
 import {
     pathFromRoot,
     readJson,
     writeJson,
+    type JsonValue,
     type JsrJson,
     type PackageJson,
 } from "./utils";
@@ -82,4 +84,78 @@ async function checkGitState() {
         console.error("there are uncommitted changes, aborting publish");
         process.exit(1);
     }
+}
+
+async function updatePublishedLog() {
+    const jsrJsonPath = pathFromRoot("jsr.json");
+    const jsrJson = await readJson<JsrJson>(jsrJsonPath);
+    const pkgJsonPath = pathFromRoot("package.json");
+    const pkgJson = await readJson<PackageJson>(pkgJsonPath);
+
+    const publishedLogPath = pathFromRoot("published.json");
+    const publishedLogRaw = await readJson(publishedLogPath);
+    const publishedLog = unsafe_parsePublishedLog(publishedLogRaw);
+
+    const jsr = {
+        version: jsrJson.version,
+        date: new Date(),
+    };
+    const npm = {
+        version: pkgJson.version,
+        date: new Date(),
+    };
+
+    const newPublishedLog = {
+        jsr,
+        npm,
+    };
+
+    await writeJson(publishedLogPath, newPublishedLog);
+}
+
+type PublishedLog = {
+    jsr: {
+        version: SemVer;
+        date: Date;
+    };
+    npm: {
+        version: SemVer;
+        date: Date;
+    };
+};
+
+function unsafe_parsePublishedLog(publishedLogRaw: JsonValue): PublishedLog {
+    if (
+        typeof publishedLogRaw !== "object" ||
+        publishedLogRaw === null ||
+        !("jsr" in publishedLogRaw) ||
+        publishedLogRaw.jsr === null ||
+        !("npm" in publishedLogRaw) ||
+        publishedLogRaw.npm === null ||
+        typeof publishedLogRaw.jsr !== "object" ||
+        typeof publishedLogRaw.npm !== "object" ||
+        !(
+            "version" in publishedLogRaw.jsr &&
+            "date" in publishedLogRaw.jsr &&
+            "version" in publishedLogRaw.npm &&
+            "date" in publishedLogRaw.npm
+        ) ||
+        typeof publishedLogRaw.jsr.version !== "string" ||
+        typeof publishedLogRaw.jsr.date !== "string" ||
+        typeof publishedLogRaw.npm.version !== "string" ||
+        typeof publishedLogRaw.npm.date !== "string"
+    ) {
+        throw new Error("published log is invalid");
+    }
+
+    const jsr = {
+        version: SemVer.unsafe_parse(publishedLogRaw.jsr.version),
+        date: new Date(publishedLogRaw.jsr.date),
+    };
+    const npm = {
+        version: SemVer.unsafe_parse(publishedLogRaw.npm.version),
+        date: new Date(publishedLogRaw.npm.date),
+    };
+
+    return { jsr, npm };
 }

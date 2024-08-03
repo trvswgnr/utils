@@ -1,6 +1,6 @@
 {
     "name": "@travvy/utils",
-    "version": "0.0.27",
+    "version": "0.0.28",
     "exports": {
         ".": "./src/index.ts",
         "./misc": "./src/modules/misc/index.ts",
@@ -9,6 +9,7 @@
         "./hash": "./src/modules/hash/index.ts",
         "./effect": "./src/modules/effect/index.ts",
         "./either": "./src/modules/either/index.ts",
-        "./fp": "./src/modules/fp/index.ts"
+        "./fp": "./src/modules/fp/index.ts",
+        "./numbers": "./src/modules/numbers/index.ts"
     }
 }
