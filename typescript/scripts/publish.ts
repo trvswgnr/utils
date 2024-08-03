@@ -78,7 +78,7 @@ async function publish() {
         } else {
             console.log("jsr version is up to date, skipping jsr publish");
         }
-        await $`git tag v${newVersion}`;
+        await $`git tag ${SemVer.toString(newVersion)}`;
         await $`git push`;
         await $`git push --tags`;
     };
@@ -92,7 +92,7 @@ async function publish() {
         jsrWasPublished ? void 0 : await writeJson(jsrJsonPath, jsrJson);
         npmWasPublished ? void 0 : await writeJson(pkgJsonPath, pkgJson);
         // reset to last commit
-        await $`git add -A && git commit -m "rollback failed publish"`;
+        await $`git add -A && git commit -m "rollback failed publish"`.nothrow();
     });
 }
 
