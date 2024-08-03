@@ -1,7 +1,7 @@
-import { Result } from "~/modules/result";
-import type { Branded } from "~/types";
+import { Result } from "../../modules/result";
+import type { Branded } from "../../types";
 import { Ordering } from "./ordering";
-import { u64 } from "~/modules/numbers";
+import { u64 } from "../../modules/numbers";
 
 /**
  * A version that complies with the Semantic Versioning 2.0.0 specification

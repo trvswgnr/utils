@@ -1,4 +1,4 @@
-import type { AnyFn, Args, Length, ShiftN } from "~/types";
+import type { AnyFn, Args, Length, ShiftN } from "../../types";
 
 export namespace PartialApplication {
     /**

@@ -1,7 +1,7 @@
 import type { MonadInstance, Monad } from "./monad";
 import type * as HKT from "./hkt";
 import type { MonoidInstance, Monoid } from "./monoid";
-import type { Intersect } from "~/types";
+import type { Intersect } from "../../types";
 
 export interface MaybeKind extends HKT.Kind {
     readonly type: Maybe<this["Target"]>;

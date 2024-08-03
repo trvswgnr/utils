@@ -1,4 +1,4 @@
-import type { RequireOne } from "~/types";
+import type { RequireOne } from "../../types";
 import type { ApplicativeStatic, ApplicativeInstance } from "./applicative";
 import type * as HKT from "./hkt";
 

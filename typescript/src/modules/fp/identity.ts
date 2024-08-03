@@ -1,4 +1,4 @@
-import type { IsNonFnObject } from "~/types";
+import type { IsNonFnObject } from "../../types";
 
 export type Identity<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => R

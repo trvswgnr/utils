@@ -1,4 +1,4 @@
-import type { Args } from "~/types";
+import type { Args } from "../../types";
 
 /**
  * Composes two functions, creating a new function that applies them in sequence.

@@ -1,4 +1,4 @@
-import type { Constructor } from "~/types";
+import type { Constructor } from "../../types";
 
 type Positionable = Constructor<{ setPos: (x: number, y: number) => void }>;
 

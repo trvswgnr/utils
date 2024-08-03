@@ -1,4 +1,4 @@
-import type { RequireOne, Constructor, NonEmptyArray } from "~/types";
+import type { RequireOne, Constructor, NonEmptyArray } from "../../types";
 import type * as HKT from "./hkt";
 
 export type Semigroup<F extends HKT.Kind> = RequireOne<

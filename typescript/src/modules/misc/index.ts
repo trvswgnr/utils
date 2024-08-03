@@ -1,4 +1,4 @@
-import type { Branded } from "~/types";
+import type { Branded } from "../../types";
 
 export { fetchJson } from "./fetchJson";
 

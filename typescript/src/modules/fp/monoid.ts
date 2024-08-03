@@ -1,5 +1,5 @@
-import type { Constructor, RequireOne } from "~/types";
 import type * as HKT from "./hkt";
+import type { Constructor, RequireOne } from "../../types";
 import type { SemigroupStatic, SemigroupInstance } from "./semigroup";
 
 export type Monoid<F extends HKT.Kind> = RequireOne<

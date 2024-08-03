@@ -1,4 +1,4 @@
-import type { Branded } from "~/types";
+import type { Branded } from "../../types";
 
 type BigIntArg = bigint | boolean | number | string;
 

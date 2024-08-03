@@ -1,5 +1,5 @@
 import type * as HKT from "./hkt";
-import type { RequireOne } from "~/types";
+import type { RequireOne } from "../../types";
 import type { FunctorStatic, FunctorInstance } from "./functor";
 
 /**

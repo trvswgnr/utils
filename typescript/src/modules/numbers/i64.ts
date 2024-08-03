@@ -1,4 +1,4 @@
-import type { Branded } from "~/types";
+import type { Branded } from "../../types";
 
 export type i64 = Branded<bigint, "i64">;
 export namespace i64 {
