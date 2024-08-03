@@ -60,6 +60,7 @@ async function publish() {
         await writeJson(pkgJsonPath, pkgJson);
         console.log("wrote package.json");
         await $`git add -A`;
+        console.log("added all files");
         await $`git commit -m "chore: publish v${newVersion}"`
             .then(() => console.log("committed"))
             .catch(() => console.log("no changes to commit"));
