@@ -96,16 +96,6 @@ async function publish() {
     });
 }
 
-async function runAllCommandsSync(promises: Promise<any>[]) {
-    for (const promise of promises) {
-        try {
-            await promise;
-        } catch (e) {
-            throw e;
-        }
-    }
-}
-
 /**
  * checks if there are any uncommitted changes in the git repository. if there
  * are, it will throw an error. also checks if the current branch is the main
