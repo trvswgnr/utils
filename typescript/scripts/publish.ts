@@ -45,17 +45,6 @@ async function publish() {
     const currentNpmVersion = log.npm.version;
     const currentJsrVersion = log.jsr.version;
 
-    const publish_npm =
-        SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less
-            ? $`npm publish`.then(() => updateNpmLog(pkgJson.version))
-            : Promise.resolve();
-    const publish_jsr =
-        SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less
-            ? $`bunx jsr publish --allow-slow-types`.then(() =>
-                  updateJsrLog(pkgJson.version),
-              )
-            : Promise.resolve();
-
     await runAllCommandsSync([
         $`bun run build`,
         writeJson(jsrJsonPath, jsrJson),
@@ -65,8 +54,14 @@ async function publish() {
         $`git commit -m "chore: publish v${newVersion}"`,
         // check if nvm command is available and use if so
         $`command -v nvm && nvm use || echo "nvm not found, skipping nvm use"`,
-        publish_npm,
-        publish_jsr,
+        SemVer.compare(currentNpmVersion, newVersion) === Ordering.Less
+            ? $`npm publish`.then(() => updateNpmLog(pkgJson.version))
+            : Promise.resolve(),
+        SemVer.compare(currentJsrVersion, newVersion) === Ordering.Less
+            ? $`bunx jsr publish --allow-slow-types`.then(() =>
+                  updateJsrLog(pkgJson.version),
+              )
+            : Promise.resolve(),
         $`git tag v${newVersion}`,
         $`git push`,
         $`git push --tags`,
