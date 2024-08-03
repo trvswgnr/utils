@@ -199,4 +199,4 @@ async function checkNodeVersion() {
     }
 }
 
-main().catch(console.error);
+await main();
