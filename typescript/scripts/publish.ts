@@ -190,17 +190,17 @@ async function updateJsrLog(version: string) {
     const publishedLogRaw = await readJson(publishedLogPath);
     const publishedLog = unsafe_parsePublishedLog(publishedLogRaw);
     const jsr = {
-        version,
-        date: new Date(),
+        version: SemVer.toString(publishedLog.jsr.version),
+        date: new Date().toISOString(),
     };
     const newPublishedLog = {
-        ...publishedLog,
+        npm: {
+            version: SemVer.toString(publishedLog.npm.version),
+            date: publishedLog.npm.date.toISOString(),
+        },
         jsr,
     };
-    await writeJson(
-        publishedLogPath,
-        JSON.parse(JSON.stringify(newPublishedLog)),
-    );
+    await writeJson(publishedLogPath, newPublishedLog);
 
     await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
     jsrWasPublished = true;
