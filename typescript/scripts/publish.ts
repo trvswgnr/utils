@@ -170,16 +170,16 @@ async function updateNpmLog(version: string) {
     const publishedLog = unsafe_parsePublishedLog(publishedLogRaw);
     const npm = {
         version,
-        date: new Date(),
+        date: new Date().toISOString(),
     };
     const newPublishedLog = {
-        ...publishedLog,
+        jsr: {
+            version: SemVer.toString(publishedLog.jsr.version),
+            date: publishedLog.jsr.date.toISOString(),
+        },
         npm,
     };
-    await writeJson(
-        publishedLogPath,
-        JSON.parse(JSON.stringify(newPublishedLog)),
-    );
+    await writeJson(publishedLogPath, newPublishedLog);
 
     await $`git add ${publishedLogPath} && git commit --amend -m "chore: publish v${version}"`;
     npmWasPublished = true;
