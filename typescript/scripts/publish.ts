@@ -189,7 +189,7 @@ async function updateNpmLog(version: string) {
     };
     await writeJson(publishedLogPath, newPublishedLog);
 
-    await $`git add -A && git commit --amend -m "chore: publish v${version}"`;
+    await $`git add -A && git commit --amend -m "chore: publish v${version}"`.nothrow();
     npmWasPublished = true;
 }
 
@@ -210,7 +210,7 @@ async function updateJsrLog(version: string) {
     };
     await writeJson(publishedLogPath, newPublishedLog);
 
-    await $`git add -A && git commit --amend -m "chore: publish v${version}"`;
+    await $`git add -A && git commit --amend -m "chore: publish v${version}"`.nothrow();
     jsrWasPublished = true;
 }
 
