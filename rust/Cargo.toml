@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+curried = "0.1.2"
 
 [lib]
 name = "travvy_utils"

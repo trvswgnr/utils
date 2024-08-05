@@ -1,17 +1,17 @@
 // use crate::fp::hkt::{Endomorphic, Morphic};
 
 pub trait Functor<A> {
-    type Kind<T>;
+    type Target<T>;
 
-    fn fmap<B, F>(self, f: F) -> Self::Kind<B>
+    fn fmap<B, F>(self, f: F) -> Self::Target<B>
     where
         F: FnMut(A) -> B;
 }
 
 impl<A> Functor<A> for Option<A> {
-    type Kind<T> = Option<T>;
+    type Target<T> = Option<T>;
 
-    fn fmap<B, F>(self, f: F) -> Self::Kind<B>
+    fn fmap<B, F>(self, f: F) -> Self::Target<B>
     where
         F: FnMut(A) -> B,
     {
@@ -19,29 +19,39 @@ impl<A> Functor<A> for Option<A> {
     }
 }
 
+#[macro_export]
+macro_rules! fmap {
+    ($f:expr) => {
+        move |x| Functor::fmap(x, $f)
+    };
+}
 
 #[cfg(test)]
 mod tests_option_functor {
     use super::*;
+    use crate::fp::function_composition::composable;
 
     fn id<A>(a: A) -> A {
         a
     }
 
-    fn compose<A, B, C>(f: impl Fn(A) -> B, g: impl Fn(B) -> C) -> impl Fn(A) -> C {
-        move |x| g(f(x))
-    }
-
     #[test]
     fn identity() {
-        let option_identity = Some(3).fmap(id);
-        assert_eq!(option_identity, Some(3));
+        let x = Some(3);
+        let fmap = |f| move |x| Functor::fmap(x, f);
+        assert_eq!(fmap(id)(x), x);
     }
 
     #[test]
     fn composition() {
-        let option_composed = Some(3).fmap(|x| x + 1).fmap(|x| x * 2);
-        assert_eq!(option_composed, Some(8));
+        let fmap_curried = composable(|f, fa| fmap!(f)(fa));
+
+        let x = Some(3);
+        let f = composable(|x: i32| x + 1);
+        let g = composable(|x: i32| x * 2);
+        let left = fmap!(f + g)(x);
+        let right = (fmap!(f) + fmap!(g))(x);
+        assert_eq!(left, right);
     }
 }
 

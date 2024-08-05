@@ -1,106 +1,28 @@
-#![feature(unboxed_closures)]
-#![feature(fn_traits)]
-use std::marker::PhantomData;
-use std::ops::Add;
+use std::error::Error as StdError;
+use travvy_utils::fp::class::Functor;
+// use travvy_utils::fp::class::Endofunctor;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Compose<F, G, A, B, C>
-where
-    F: Fn(B) -> C,
-    G: Fn(A) -> B,
-{
-    f: F,
-    g: G,
-    _phantom: PhantomData<(A, B, C)>,
-}
+type Error = Box<dyn StdError>;
 
-impl<F, G, A, B, C> Compose<F, G, A, B, C>
-where
-    F: Fn(B) -> C,
-    G: Fn(A) -> B,
-{
-    fn new(f: F, g: G) -> Self {
-        Compose {
-            f,
-            g,
-            _phantom: PhantomData,
-        }
-    }
-}
+pub fn main() {
 
-impl<F, G, A, B, C> Fn<(A,)> for Compose<F, G, A, B, C>
-where
-    F: Fn(B) -> C,
-    G: Fn(A) -> B,
-{
-    extern "rust-call" fn call(&self, args: (A,)) -> C {
-        (self.f)((self.g)(args.0))
-    }
-}
+    // let option_doubled = Some(3).fmap(|x: i32| x * 2);
+    // println!("Option result: {:?}", option_doubled);
+    // assert_eq!(option_doubled, Some(6));
 
-impl<F, G, A, B, C> FnMut<(A,)> for Compose<F, G, A, B, C>
-where
-    F: Fn(B) -> C,
-    G: Fn(A) -> B,
-{
-    extern "rust-call" fn call_mut(&mut self, args: (A,)) -> C {
-        self.call(args)
-    }
-}
+    // // let vec_doubled = vec![1, 2, 3].fmap(|x: i32| x * 2);
+    // // println!("Vec result: {:?}", vec_doubled);
+    // // assert_eq!(vec_doubled, vec![2, 4, 6]);
 
-impl<F, G, A, B, C> FnOnce<(A,)> for Compose<F, G, A, B, C>
-where
-    F: Fn(B) -> C,
-    G: Fn(A) -> B,
-{
-    type Output = C;
+    // // let mapped_ok = Ok::<i32, Error>(5).fmap(|x| x * 2);
+    // // println!("Mapped Ok: {:?}", mapped_ok);
+    // // assert_eq!(mapped_ok.unwrap(), 10);
 
-    extern "rust-call" fn call_once(self, args: (A,)) -> C {
-        self.call(args)
-    }
-}
+    // // let mapped_ok = Endofunctor::fmap(Ok::<&str, Error>("tr4vvyr00lz"), |x| x.len());
+    // // println!("Mapped Ok: {:?}", mapped_ok);
+    // // assert_eq!(mapped_ok.unwrap(), 11);
 
-impl<F, G, H, A, B, C> Add<H> for Compose<F, G, B, C, A>
-where
-    F: Fn(C) -> A,
-    G: Fn(B) -> C,
-    H: Fn(A) -> B,
-{
-    type Output = Compose<Compose<F, G, B, C, A>, H, A, B, A>;
-
-    fn add(self, rhs: H) -> Self::Output {
-        Compose::new(self, rhs)
-    }
-}
-
-fn cfn<F, A, B>(f: F) -> Compose<F, fn(A) -> A, A, A, B>
-where
-    F: Fn(A) -> B,
-{
-    Compose::new(f, |x| x)
-}
-
-fn reverse(x: Vec<i32>) -> Vec<i32> {
-    let mut x = x;
-    x.reverse();
-    x
-}
-
-fn sort(x: Vec<i32>) -> Vec<i32> {
-    let mut x = x;
-    x.sort();
-    x
-}
-
-fn main() {
-    let reverse = cfn(reverse);
-
-    let sort = cfn(sort);
-
-    let desort = reverse + sort;
-
-    assert_eq!(
-        desort([2, 8, 7, 10, 1, 9, 5, 3, 4, 6].into()),
-        [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-    );
+    // // let mapped_string = Endofunctor::fmap("tr4vvyr00lz".to_string(), |x| x.to_ascii_uppercase());
+    // // println!("Mapped string: {:?}", mapped_string);
+    // // assert_eq!(mapped_string, "TR4VVYR00LZ");
 }

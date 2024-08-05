@@ -1,23 +1,24 @@
 use std::marker::PhantomData;
 use std::ops::Add;
 
-pub struct ComposableFn<F, G, A, B, C>
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Compose<F, G, A, B, C>
 where
-    F: Fn(A) -> B,
-    G: Fn(B) -> C,
+    F: Fn(B) -> C,
+    G: Fn(A) -> B,
 {
     f: F,
     g: G,
     _phantom: PhantomData<(A, B, C)>,
 }
 
-impl<F, G, A, B, C> ComposableFn<F, G, A, B, C>
+impl<F, G, A, B, C> Compose<F, G, A, B, C>
 where
-    F: Fn(A) -> B,
-    G: Fn(B) -> C,
+    F: Fn(B) -> C,
+    G: Fn(A) -> B,
 {
     fn new(f: F, g: G) -> Self {
-        ComposableFn {
+        Compose {
             f,
             g,
             _phantom: PhantomData,
@@ -25,30 +26,30 @@ where
     }
 }
 
-impl<F, G, A, B, C> Fn<(A,)> for ComposableFn<F, G, A, B, C>
+impl<F, G, A, B, C> Fn<(A,)> for Compose<F, G, A, B, C>
 where
-    F: Fn(A) -> B,
-    G: Fn(B) -> C,
+    F: Fn(B) -> C,
+    G: Fn(A) -> B,
 {
     extern "rust-call" fn call(&self, args: (A,)) -> C {
-        (self.g)((self.f)(args.0))
+        (self.f)((self.g)(args.0))
     }
 }
 
-impl<F, G, A, B, C> FnMut<(A,)> for ComposableFn<F, G, A, B, C>
+impl<F, G, A, B, C> FnMut<(A,)> for Compose<F, G, A, B, C>
 where
-    F: Fn(A) -> B,
-    G: Fn(B) -> C,
+    F: Fn(B) -> C,
+    G: Fn(A) -> B,
 {
     extern "rust-call" fn call_mut(&mut self, args: (A,)) -> C {
         self.call(args)
     }
 }
 
-impl<F, G, A, B, C> FnOnce<(A,)> for ComposableFn<F, G, A, B, C>
+impl<F, G, A, B, C> FnOnce<(A,)> for Compose<F, G, A, B, C>
 where
-    F: Fn(A) -> B,
-    G: Fn(B) -> C,
+    F: Fn(B) -> C,
+    G: Fn(A) -> B,
 {
     type Output = C;
 
@@ -57,22 +58,48 @@ where
     }
 }
 
-impl<F, G, H, A, B, C, D> Add<H> for ComposableFn<F, G, A, B, C>
+impl<F, G, H, A, B, C> Add<H> for Compose<F, G, B, C, A>
 where
-    F: Fn(A) -> B,
+    F: Fn(C) -> A,
     G: Fn(B) -> C,
-    H: Fn(C) -> D,
+    H: Fn(A) -> B,
 {
-    type Output = ComposableFn<ComposableFn<F, G, A, B, C>, H, A, C, D>;
+    type Output = Compose<Compose<F, G, B, C, A>, H, A, B, A>;
 
     fn add(self, rhs: H) -> Self::Output {
-        ComposableFn::new(self, rhs)
+        Compose::new(self, rhs)
     }
 }
 
-pub fn f<F, A, B>(f: F) -> ComposableFn<F, fn(B) -> B, A, B, B>
+impl<'a, F, G, H, A, B, C> Add<H> for &'a Compose<F, G, B, C, A>
+where
+    F: Fn(C) -> A,
+    G: Fn(B) -> C,
+    H: Fn(A) -> B,
+{
+    type Output = Compose<&'a Compose<F, G, B, C, A>, H, A, B, A>;
+
+    fn add(self, rhs: H) -> Self::Output {
+        Compose::new(self, rhs)
+    }
+}
+
+pub fn composable<F, A, B>(f: F) -> Compose<F, fn(A) -> A, A, A, B>
 where
     F: Fn(A) -> B,
 {
-    ComposableFn::new(f, |x| x)
+    Compose::new(f, |x| x)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_adheres_to_composition_law() {
+        let f = composable(|x: i32| x + 1);
+        let g = composable(|x: i32| x * 2);
+        let x = 5;
+        assert_eq!((f + g)(x), f(g(x)));
+    }
 }
