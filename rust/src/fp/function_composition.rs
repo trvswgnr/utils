@@ -91,6 +91,7 @@ where
     Compose::new(f, |x| x)
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,0 +1,11 @@
+(executable
+ (public_name ocaml)
+ (name main)
+ (libraries ocaml))
+
+(env
+ (dev
+  (ocamlopt_flags
+   (:standard -ccopt -Wl,-no_fixup_chains,-undefined,dynamic_lookup))
+  (flags
+   (:standard -warn-error -A))))

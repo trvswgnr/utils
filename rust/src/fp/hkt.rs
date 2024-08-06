@@ -1,19 +1,19 @@
-pub trait Morphic<Source> {
-    type In;
-    type Out;
+pub trait Morphic<S> {
+    type Domain;
+    type Codomain;
 }
 
 pub trait Endomorphic {
-    type In;
-    type Out;
+    type Domain;
+    type Codomain;
 }
 
 impl<S, T> Morphic<T> for S {
-    type In = S;
-    type Out = T;
+    type Domain = S;
+    type Codomain = T;
 }
 
 impl<T> Endomorphic for T {
-    type In = T;
-    type Out = T;
+    type Domain = T;
+    type Codomain = T;
 }
