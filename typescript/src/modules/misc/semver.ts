@@ -64,17 +64,41 @@ export namespace SemVer {
     }
 
     type Numeric = bigint | number | `${bigint | number}`;
-
+    type SemVerLike = {
+        major: Numeric;
+        minor: Numeric;
+        patch: Numeric;
+        prerelease?: string;
+        metadata?: string;
+    };
     /**
      * Create a new SemVer
      */
+    export function create(semverLike: SemVerLike): SemVer;
     export function create(
         major: Numeric,
         minor: Numeric,
         patch: Numeric,
+        prerelease?: string,
+        metadata?: string,
+    ): SemVer;
+    export function create(
+        major: Numeric | SemVerLike,
+        minor?: Numeric,
+        patch?: Numeric,
         prerelease: string = "",
         metadata: string = "",
     ): SemVer {
+        if (typeof major === "object") {
+            const {
+                major: major_,
+                minor: minor_,
+                patch: patch_,
+                prerelease: prerelease_,
+                metadata: metadata_,
+            } = major;
+            return create(major_, minor_, patch_, prerelease_, metadata_);
+        }
         return {
             major: u64.unsafe_parse(major),
             minor: u64.unsafe_parse(minor),
