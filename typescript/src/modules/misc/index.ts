@@ -1,7 +1,7 @@
 import type { Branded } from "../../types";
 
 export { fetchJson } from "./fetchJson";
-export * as SemVer from "./semver";
+export { SemVer } from "./semver";
 
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
