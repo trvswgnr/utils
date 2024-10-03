@@ -1,4 +1,4 @@
-import type { Branded } from "../../types";
+import type { Args, Branded, Constructor, Fn } from "../../types";
 
 export { fetchJson } from "./fetchJson";
 export { SemVer } from "./semver";
@@ -82,4 +82,173 @@ export function staticImplements<T>() {
     return <U extends T>(constructor: U) => {
         constructor;
     };
+}
+
+/**
+ * Checks if the given value is a constructor function.
+ *
+ * @param x - The value to check
+ * @returns A type predicate indicating whether x is of type `Constructor<T, A>`
+ *
+ * @example
+ * ```ts
+ * class MyClass {}
+ * function regularFunction() {}
+ * const arrowFunction = () => {};
+ *
+ * isConstructor(MyClass); // true
+ * isConstructor(arrowFunction); // false
+ * isConstructor(regularFunction); // true
+ * isConstructor({}); // false
+ * ```
+ *
+ * @note This method returns `true` for regular functions, as they can be
+ * called with `new` in JavaScript.
+ */
+export function isConstructor<T, A extends Args>(x: unknown): x is Constructor<T, A> {
+    if (typeof x !== "function") return false;
+    if (!x.prototype) return false;
+    try {
+        Reflect.construct(String, [], x as never);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+type PrimitiveMap = {
+    string: string;
+    number: number;
+    boolean: boolean;
+    symbol: symbol;
+    bigint: bigint;
+    undefined: undefined;
+    function: Fn<readonly unknown[], unknown>;
+    null: null;
+    object: Record<PropertyKey, unknown>;
+};
+
+/**
+ * Checks if the given value is an object and not null.
+ *
+ * @param x - The value to check.
+ * @returns True if the value is an object (and not null), false otherwise.
+ *
+ * @example
+ * ```ts
+ * isObject({}) // true
+ * isObject([]) // true
+ * isObject(null) // false
+ * isObject(42) // false
+ * isObject("string") // false
+ * ```
+ */
+export function isObject(x: unknown): x is Record<PropertyKey, unknown> {
+    return typeof x === "object" && x !== null;
+}
+
+/**
+ * Checks if the given value is an object with a specific key.
+ *
+ * @param x - The value to check.
+ * @param key - The key to check for in the object.
+ * @returns True if the value is an object and contains the specified key, false otherwise.
+ *
+ * @example
+ * ```ts
+ * const obj = { name: "John", age: 30 };
+ * isObjectWithKey(obj, "name") // true
+ * isObjectWithKey(obj, "address") // false
+ * isObjectWithKey("not an object", "key") // false
+ * ```
+ */
+export function isObjectWithKey<K extends string>(
+    x: unknown,
+    key: K,
+): x is Record<K, unknown> {
+    return isObject(x) && key in x;
+}
+
+/**
+ * Checks if the given value is an object with a specific key of a primitive type.
+ *
+ * @param x - The value to check.
+ * @param key - The key to check for in the object.
+ * @param type - The primitive type to check for.
+ * @returns A type predicate indicating whether x is a Record with key `K` of type `PrimitiveMap[T]`.
+ */
+export function isObjectWithKeyOfType<K extends string, T extends keyof PrimitiveMap>(
+    x: unknown,
+    key: K,
+    type: T,
+): x is Record<K, PrimitiveMap[T]>;
+/**
+ * Checks if the given value is an object with a specific key of a constructor type.
+ *
+ * @param x - The value to check.
+ * @param key - The key to check for in the object.
+ * @param type - The constructor type to check for.
+ * @returns A type predicate indicating whether x is a Record with key `K` of type `InstanceType<T>`.
+ */
+export function isObjectWithKeyOfType<K extends string, T extends Constructor>(
+    x: unknown,
+    key: K,
+    type: T,
+): x is Record<K, InstanceType<T>>;
+export function isObjectWithKeyOfType<
+    K extends string,
+    T extends keyof PrimitiveMap | Constructor,
+>(
+    x: unknown,
+    key: K,
+    type: T,
+): x is Record<
+    K,
+    T extends Constructor
+        ? InstanceType<T>
+        : T extends keyof PrimitiveMap
+        ? PrimitiveMap[T]
+        : never
+> {
+    if (!isObject(x) || !(key in x)) return false;
+    if (isConstructor(type)) return x[key] instanceof type;
+    if (type === "object") return isObject(x[key]);
+    if (type === "null") return x === null;
+    return typeof x[key] === type;
+}
+
+/**
+ * Checks if a value is of a specific primitive type.
+ *
+ * @template T - A key of the PrimitiveMap type, representing primitive types.
+ * @param x - The value to check.
+ * @param t - The primitive type to check against.
+ * @returns A type predicate indicating whether x is of type PrimitiveMap[T].
+ */
+export function isType<T extends keyof PrimitiveMap>(
+    x: unknown,
+    t: T,
+): x is PrimitiveMap[T];
+/**
+ * Checks if a value is an instance of a specific constructor.
+ *
+ * @template T - A constructor type.
+ * @param x - The value to check.
+ * @param t - The constructor to check against.
+ * @returns A type predicate indicating whether `x` is an instance of the given constructor.
+ */
+export function isType<T extends Constructor>(x: unknown, t: T): x is InstanceType<T>;
+export function isType<T extends keyof PrimitiveMap | Constructor>(
+    x: unknown,
+    t: T,
+): x is T extends Constructor
+    ? InstanceType<T>
+    : T extends keyof PrimitiveMap
+    ? PrimitiveMap[T]
+    : never {
+    if (arguments.length !== 2) throw new RangeError("isType requires two arguments");
+    if (isConstructor(t)) return x instanceof t;
+    if (t === "object") return isObject(x);
+    if (t === "null") return x === null;
+    return typeof x === t;
 }

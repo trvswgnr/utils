@@ -122,19 +122,14 @@ export type ShiftNMap<T extends readonly any[]> = {
  *   removed.
  * - If T is an empty tuple: never
  */
-export type ShiftOne<T extends readonly any[]> = T extends [any, ...infer U]
-    ? U
-    : never;
+export type ShiftOne<T extends readonly any[]> = T extends [any, ...infer U] ? U : never;
 
 export type Args = readonly any[];
 export type AnyFn = (...args: any[]) => any;
+export type Fn<A extends Args, R> = (...args: A) => R;
 
-export type Params<F extends AnyFn> = F extends (...args: infer P) => any
-    ? P
-    : never;
-export type Return<F extends AnyFn> = F extends (...args: any[]) => infer R
-    ? R
-    : never;
+export type Params<F extends AnyFn> = F extends (...args: infer P) => any ? P : never;
+export type Return<F extends AnyFn> = F extends (...args: any[]) => infer R ? R : never;
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
@@ -167,7 +162,9 @@ export type OnlyFns<T> = {
  * @template T - The type to be constructed, defaults to any object
  * @template A - The arguments to be passed to the constructor, defaults to []
  */
-export type Constructor<T = {}, A extends Args = Args> = new (...args: A) => T;
+export type Constructor<T = NonNullable<unknown>, A extends Args = Args> = new (
+    ...args: A
+) => T;
 
 /**
  * Forces TS to show the type without aliases.
