@@ -97,7 +97,7 @@ export namespace SemVer {
                 prerelease: prerelease_,
                 metadata: metadata_,
             } = major;
-            return create(major_, minor_, patch_, prerelease_ ?? "", metadata_ ?? "");
+            return create(major_, minor_, patch_, prerelease_, metadata_);
         }
         return {
             major: u64.unsafe_parse(major),
