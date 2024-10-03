@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 
-import { isConstructor, isType } from "./index";
+import { isConstructor, isType, flip, curry } from "./index";
 
 describe("isConstructor", () => {
     // Basic cases
@@ -220,5 +220,38 @@ describe("isType", () => {
         expect(isType(null, {})).toBe(false);
         // @ts-expect-error: Testing invalid input
         expect(() => isType(42)).toThrow();
+    });
+});
+
+describe("flip", () => {
+    test("flips a normal function with two arguments", () => {
+        const fn = (a: number, b: string) => `${a}${b}`;
+        const flippedAdd = flip(fn);
+        expect(flippedAdd("1", 2)).toBe("21");
+    });
+    test("flips a curried function with two arguments", () => {
+        const fn = (a: number) => (b: string) => `${a}${b}`;
+        const flippedAdd = flip(fn);
+        expect(flippedAdd("1")(2)).toBe("21");
+    });
+});
+
+describe("curry", () => {
+    test("curries a normal function with two arguments", () => {
+        const fn = (a: number, b: string) => `${a}${b}`;
+        const curriedAdd = curry(fn);
+        expect(curriedAdd(1)("2")).toBe("12");
+    });
+
+    test("curries a curried function with two arguments", () => {
+        const fn = (a: number) => (b: string) => `${a}${b}`;
+        const curriedAdd = curry(fn);
+        expect(curriedAdd(1)("2")).toBe("12");
+    });
+
+    test("curries a function with more than two arguments", () => {
+        const fn = (a: number, b: string, c: boolean) => `${a}${b}${c}`;
+        const curriedAdd = curry(fn);
+        expect(curriedAdd(1)("2")(true)).toBe("12true");
     });
 });

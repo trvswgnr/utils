@@ -261,3 +261,10 @@ export function curry<T extends AnyFn, TAgg extends unknown[]>(
     if (func.length === aggregatedArgs.length) return func(...aggregatedArgs);
     return ((arg: any) => curry(func, [...aggregatedArgs, arg])) as any;
 }
+
+export function flip<A, B, C>(f: (a: A) => (b: B) => C): (b: B) => (a: A) => C;
+export function flip<A, B, C, F>(f: (a: A, b: B) => C): (b: B, a: A) => C;
+export function flip<A, B>(f: AnyFn) {
+    if (f.length === 1) return (b: B) => (a: A) => f(a)(b);
+    return (b: B, a: A) => f(a, b);
+}
