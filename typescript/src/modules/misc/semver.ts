@@ -63,6 +63,27 @@ export namespace SemVer {
         }
     }
 
+    type Numeric = bigint | number | `${bigint | number}`;
+
+    /**
+     * Create a new SemVer
+     */
+    export function create(
+        major: Numeric,
+        minor: Numeric,
+        patch: Numeric,
+        prerelease: string = "",
+        metadata: string = "",
+    ): SemVer {
+        return {
+            major: u64.unsafe_parse(major),
+            minor: u64.unsafe_parse(minor),
+            patch: u64.unsafe_parse(patch),
+            prerelease: unsafe_parseIdentifiers(prerelease),
+            metadata: unsafe_parseIdentifiers(metadata),
+        };
+    }
+
     /**
      * Safely parse a semver string
      *
@@ -132,10 +153,7 @@ export namespace SemVer {
         if (xyz !== Ordering.Equal) return xyz;
 
         // Compare prerelease
-        const prereleaseComparison = unsafe_comparePrerelease(
-            a.prerelease,
-            b.prerelease,
-        );
+        const prereleaseComparison = unsafe_comparePrerelease(a.prerelease, b.prerelease);
         if (prereleaseComparison !== Ordering.Equal) {
             return prereleaseComparison;
         }
@@ -145,10 +163,8 @@ export namespace SemVer {
 
     export function toString(x: SemVer): string {
         const base = `${x.major}.${x.minor}.${x.patch}`;
-        const prerelease =
-            x.prerelease.length > 0 ? `-${x.prerelease.join(".")}` : "";
-        const metadata =
-            x.metadata.length > 0 ? `+${x.metadata.join(".")}` : "";
+        const prerelease = x.prerelease.length > 0 ? `-${x.prerelease.join(".")}` : "";
+        const metadata = x.metadata.length > 0 ? `+${x.metadata.join(".")}` : "";
         return `${base}${prerelease}${metadata}`;
     }
 }
