@@ -86,8 +86,8 @@ export namespace SemVer {
         major: Numeric | SemVerLike,
         minor?: Numeric,
         patch?: Numeric,
-        prerelease: string = "",
-        metadata: string = "",
+        prerelease?: string,
+        metadata?: string,
     ): SemVer {
         if (typeof major === "object") {
             const {
@@ -103,8 +103,8 @@ export namespace SemVer {
             major: u64.unsafe_parse(major),
             minor: u64.unsafe_parse(minor),
             patch: u64.unsafe_parse(patch),
-            prerelease: prerelease ? unsafe_parseIdentifiers(prerelease) : [],
-            metadata: metadata ? unsafe_parseIdentifiers(metadata) : [],
+            prerelease: unsafe_parseIdentifiers(prerelease),
+            metadata: unsafe_parseIdentifiers(metadata),
         };
     }
 
