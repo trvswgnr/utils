@@ -203,3 +203,10 @@ export type Intersect<A = {}, B = {}, C = {}, D = {}, E = {}, F = {}> = A &
 
 declare const BRAND: unique symbol;
 export type Branded<T, Brand> = T & { [BRAND]: Brand };
+
+export type Curried<Fn extends AnyFn> = Parameters<Fn> extends [
+    infer FirstArg,
+    ...infer Rest,
+]
+    ? (arg: FirstArg) => Curried<(...args: Rest) => ReturnType<Fn>>
+    : ReturnType<Fn>;

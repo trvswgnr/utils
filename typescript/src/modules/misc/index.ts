@@ -1,4 +1,4 @@
-import type { Args, Branded, Constructor, Fn } from "../../types";
+import type { AnyFn, Args, Branded, Constructor, Curried, Fn } from "../../types";
 
 export { fetchJson } from "./fetchJson";
 export { SemVer } from "./semver";
@@ -251,4 +251,13 @@ export function isType<T extends keyof PrimitiveMap | Constructor>(
     if (t === "object") return isObject(x);
     if (t === "null") return x === null;
     return typeof x === t;
+}
+
+export function curry<T extends AnyFn, TAgg extends unknown[]>(
+    func: T,
+    agg?: TAgg,
+): Curried<T> {
+    const aggregatedArgs = agg ?? [];
+    if (func.length === aggregatedArgs.length) return func(...aggregatedArgs);
+    return ((arg: any) => curry(func, [...aggregatedArgs, arg])) as any;
 }
