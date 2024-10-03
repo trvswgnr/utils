@@ -218,6 +218,17 @@ export function isObjectWithKeyOfType<
 }
 
 /**
+ * Checks if a value is of a specific primitive type (curried).
+ *
+ * @template T - A key of the PrimitiveMap type, representing primitive types.
+ * @param x - The value to check.
+ * @param t - The primitive type to check against.
+ * @returns A type predicate indicating whether x is of type PrimitiveMap[T].
+ */
+export function isType<T extends keyof PrimitiveMap>(
+    t: T,
+): (x: unknown) => x is PrimitiveMap[T];
+/**
  * Checks if a value is of a specific primitive type.
  *
  * @template T - A key of the PrimitiveMap type, representing primitive types.
@@ -226,8 +237,8 @@ export function isObjectWithKeyOfType<
  * @returns A type predicate indicating whether x is of type PrimitiveMap[T].
  */
 export function isType<T extends keyof PrimitiveMap>(
-    x: unknown,
     t: T,
+    x: unknown,
 ): x is PrimitiveMap[T];
 /**
  * Checks if a value is an instance of a specific constructor.
@@ -237,15 +248,9 @@ export function isType<T extends keyof PrimitiveMap>(
  * @param t - The constructor to check against.
  * @returns A type predicate indicating whether `x` is an instance of the given constructor.
  */
-export function isType<T extends Constructor>(x: unknown, t: T): x is InstanceType<T>;
-export function isType<T extends keyof PrimitiveMap | Constructor>(
-    x: unknown,
-    t: T,
-): x is T extends Constructor
-    ? InstanceType<T>
-    : T extends keyof PrimitiveMap
-    ? PrimitiveMap[T]
-    : never {
+export function isType<T extends Constructor>(t: T, x: unknown): x is InstanceType<T>;
+export function isType(t: any, x?: unknown) {
+    if (arguments.length === 1) return (x: unknown) => isType(t, x);
     if (arguments.length !== 2) throw new RangeError("isType requires two arguments");
     if (isConstructor(t)) return x instanceof t;
     if (t === "object") return isObject(x);

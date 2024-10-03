@@ -120,79 +120,79 @@ describe("isConstructor", () => {
 describe("isType", () => {
     // Primitive types
     test("correctly identifies string", () => {
-        expect(isType("hello", "string")).toBe(true);
-        expect(isType("", "string")).toBe(true);
-        expect(isType(123, "string")).toBe(false);
+        expect(isType("string", "hello")).toBe(true);
+        expect(isType("string", "")).toBe(true);
+        expect(isType("string", 123)).toBe(false);
     });
 
     test("correctly identifies number", () => {
-        expect(isType(123, "number")).toBe(true);
-        expect(isType(0, "number")).toBe(true);
-        expect(isType(NaN, "number")).toBe(true);
-        expect(isType(Infinity, "number")).toBe(true);
-        expect(isType("123", "number")).toBe(false);
+        expect(isType("number", 123)).toBe(true);
+        expect(isType("number", 0)).toBe(true);
+        expect(isType("number", NaN)).toBe(true);
+        expect(isType("number", Infinity)).toBe(true);
+        expect(isType("number", "123")).toBe(false);
     });
 
     test("correctly identifies boolean", () => {
-        expect(isType(true, "boolean")).toBe(true);
-        expect(isType(false, "boolean")).toBe(true);
-        expect(isType(1, "boolean")).toBe(false);
+        expect(isType("boolean", true)).toBe(true);
+        expect(isType("boolean", false)).toBe(true);
+        expect(isType("boolean", 1)).toBe(false);
     });
 
     test("correctly identifies symbol", () => {
-        expect(isType(Symbol("test"), "symbol")).toBe(true);
-        expect(isType(Symbol.for("test"), "symbol")).toBe(true);
+        expect(isType("symbol", Symbol("test"))).toBe(true);
+        expect(isType("symbol", Symbol.for("test"))).toBe(true);
         expect(isType("symbol", "symbol")).toBe(false);
     });
 
     test("correctly identifies bigint", () => {
-        expect(isType(BigInt(123), "bigint")).toBe(true);
-        expect(isType(123n, "bigint")).toBe(true);
-        expect(isType(123, "bigint")).toBe(false);
+        expect(isType("bigint", BigInt(123))).toBe(true);
+        expect(isType("bigint", 123n)).toBe(true);
+        expect(isType("bigint", 123)).toBe(false);
     });
 
     test("correctly identifies undefined", () => {
-        expect(isType(undefined, "undefined")).toBe(true);
-        expect(isType(null, "undefined")).toBe(false);
+        expect(isType("undefined", undefined)).toBe(true);
+        expect(isType("undefined", null)).toBe(false);
     });
 
     test("correctly identifies null", () => {
-        expect(isType(null, "null")).toBe(true);
-        expect(isType(undefined, "null")).toBe(false);
+        expect(isType("null", null)).toBe(true);
+        expect(isType("null", undefined)).toBe(false);
     });
 
     test("correctly identifies object", () => {
-        expect(isType({}, "object")).toBe(true);
-        expect(isType([], "object")).toBe(true);
-        expect(isType(new Date(), "object")).toBe(true);
-        expect(isType(null, "object")).toBe(false);
-        expect(isType(42, "object")).toBe(false);
+        expect(isType("object", {})).toBe(true);
+        expect(isType("object", [])).toBe(true);
+        expect(isType("object", new Date())).toBe(true);
+        expect(isType("object", null)).toBe(false);
+        expect(isType("object", 42)).toBe(false);
     });
 
     // Constructor types
     class TestClass {}
     test("correctly identifies instances of custom classes", () => {
-        expect(isType(new TestClass(), TestClass)).toBe(true);
-        expect(isType({}, TestClass)).toBe(false);
+        expect(isType(TestClass, new TestClass())).toBe(true);
+        expect(isType(TestClass, {})).toBe(false);
     });
 
     test("correctly identifies instances of built-in classes", () => {
-        expect(isType(new Date(), Date)).toBe(true);
-        expect(isType([], Array)).toBe(true);
-        expect(isType(new Map(), Map)).toBe(true);
-        expect(isType(new Set(), Set)).toBe(true);
-        expect(isType(/regex/, RegExp)).toBe(true);
-        expect(isType(new Error(), Error)).toBe(true);
+        expect(isType(Date, new Date())).toBe(true);
+        expect(isType(Array, [])).toBe(true);
+        expect(isType(Map, new Map())).toBe(true);
+        expect(isType(Set, new Set())).toBe(true);
+        expect(isType(RegExp, /regex/)).toBe(true);
+        expect(isType(Error, new Error())).toBe(true);
     });
 
     // Edge cases
     test("handles edge cases correctly", () => {
-        expect(isType(Object.create(null), "object")).toBe(true);
-        expect(isType(function () {}, "function")).toBe(true);
-        expect(isType(async function () {}, "function")).toBe(true);
-        expect(isType(function* () {}, "function")).toBe(true);
-        expect(isType(() => {}, "function")).toBe(true);
-        expect(isType(class {}, "function")).toBe(true);
+        expect(isType("object", Object.create(null))).toBe(true);
+        expect(isType("function", function () {})).toBe(true);
+        expect(isType("function", async function () {})).toBe(true);
+        expect(isType("function", function* () {})).toBe(true);
+        expect(isType("function", () => {})).toBe(true);
+        expect(isType("function", class {})).toBe(true);
     });
 
     test("handles inherited types correctly", () => {
@@ -200,26 +200,33 @@ describe("isType", () => {
         class Derived extends Base {}
         const base = new Base();
         const derived = new Derived();
-        expect(isType(derived, Base)).toBe(true);
-        expect(isType(derived, Derived)).toBe(true);
-        expect(isType(base, Base)).toBe(true);
-        expect(isType(base, Derived)).toBe(false);
+        expect(isType(Base, derived)).toBe(true);
+        expect(isType(Derived, derived)).toBe(true);
+        expect(isType(Base, base)).toBe(true);
+        expect(isType(Derived, base)).toBe(false);
     });
 
     test("handles primitive object wrappers correctly", () => {
-        expect(isType(new String("test"), String)).toBe(true);
-        expect(isType(new Number(42), Number)).toBe(true);
-        expect(isType(new Boolean(true), Boolean)).toBe(true);
+        expect(isType(String, new String("test"))).toBe(true);
+        expect(isType(Number, new Number(42))).toBe(true);
+        expect(isType(Boolean, new Boolean(true))).toBe(true);
     });
 
     // Invalid inputs
     test("handles invalid inputs gracefully", () => {
         // @ts-expect-error: Testing invalid input
-        expect(isType({}, "invalidType")).toBe(false);
+        expect(isType("invalidType", {})).toBe(false);
         // @ts-expect-error: Testing invalid input
-        expect(isType(null, {})).toBe(false);
+        expect(isType({}, null)).toBe(false);
         // @ts-expect-error: Testing invalid input
-        expect(() => isType(42)).toThrow();
+        expect(() => isType()).toThrow();
+    });
+
+    // curried version
+    test("curried version works correctly", () => {
+        expect(isType("string")("hello")).toBe(true);
+        expect(isType("number")(123)).toBe(true);
+        expect(isType("boolean")(true)).toBe(true);
     });
 });
 
