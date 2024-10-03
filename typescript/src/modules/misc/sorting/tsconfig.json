@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         // Enable latest features
-        "lib": ["ESNext", "DOM"],
+        "lib": ["ESNext"],
         "target": "ESNext",
         "module": "ESNext",
         "moduleDetection": "force",
@@ -26,13 +26,9 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false,
-        "noUncheckedIndexedAccess": true,
+        "noUncheckedIndexedAccess": false,
         "exactOptionalPropertyTypes": true,
         "useUnknownInCatchVariables": true,
         "noImplicitOverride": true
-
-        // "paths": {
-        //     "~/*": ["./src/*"]
-        // }
     }
 }

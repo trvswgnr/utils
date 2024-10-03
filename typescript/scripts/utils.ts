@@ -117,7 +117,7 @@ export async function getConfirmation(message: string): Promise<boolean> {
     throw new Error("no confirmation received");
 }
 
-export async function exec(cmd: string, quiet = true): Promise<number> {
+export async function exec(cmd: string, quiet = false): Promise<number> {
     const p = Bun.spawn(cmd.split(" "), {
         stdout: "pipe",
         stderr: "pipe",

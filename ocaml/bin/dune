@@ -1,7 +1,9 @@
 (executable
  (public_name ocaml)
  (name main)
- (libraries ocaml))
+ (libraries ppx_lazy unix)
+ (preprocess
+  (pps ppx_lazy)))
 
 (env
  (dev

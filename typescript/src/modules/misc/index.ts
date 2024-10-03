@@ -1,6 +1,7 @@
 import type { Branded } from "../../types";
 
 export { fetchJson } from "./fetchJson";
+export * as SemVer from "./semver";
 
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
@@ -50,10 +51,7 @@ export const BAIL = Symbol("BAIL");
  */
 export function loggedMethod<This, Args extends any[], Return>(
     target: (this: This, ...args: Args) => Return,
-    context: ClassMethodDecoratorContext<
-        This,
-        (this: This, ...args: Args) => Return
-    >,
+    context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>,
 ) {
     const methodName = String(context.name);
 

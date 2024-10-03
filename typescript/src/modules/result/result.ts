@@ -2,13 +2,19 @@ import type { IsAny } from "../../types";
 
 export { Result, Ok, Err };
 
-type Ok<T> = T extends Error ? never : IsAny<T> extends true ? never : T;
+type Result<T, E extends Error> = Ok<T> | Err<E>;
+
+type Ok<T> = T extends Error
+    ? never
+    : IsAny<T> extends true
+        ? never
+        : T;
+
+type Err<E extends Error> = E & Error;
 
 function Ok<T>(value: T): Ok<T> {
     return value as Ok<T>;
 }
-
-type Err<E extends Error> = E & Error;
 
 function Err(e: unknown): Err<Error> {
     return Err.from(e);
@@ -73,8 +79,6 @@ namespace Err {
         };
     }
 }
-
-type Result<T, E extends Error = Error> = Ok<T> | Err<E>;
 
 /**
  * Result is a type that represents the result of a function.

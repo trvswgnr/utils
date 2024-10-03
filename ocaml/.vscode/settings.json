@@ -1,0 +1,10 @@
+{
+    "[ocaml]": {
+        "editor.defaultFormatter": "ocamllabs.ocaml-platform",
+        "editor.inlayHints.enabled": "off"
+    },
+    "ocaml.sandbox": {
+        "kind": "opam",
+        "switch": "ocaml-base-compiler.5.2.0"
+    }
+}
