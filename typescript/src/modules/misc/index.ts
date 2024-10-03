@@ -258,6 +258,37 @@ export function isType(t: any, x?: unknown) {
     return typeof x === t;
 }
 
+const _isObject = (x: unknown) => isObject(x);
+
+export namespace Type {
+    /** checks if a given value is a string */
+    export const isString = (x: unknown) => typeof x === "string";
+    /** checks if a given value is a number */
+    export const isNumber = (x: unknown) => typeof x === "number";
+    /** checks if a given value is a boolean */
+    export const isBoolean = (x: unknown) => typeof x === "boolean";
+    /** checks if a given value is a symbol */
+    export const isSymbol = (x: unknown) => typeof x === "symbol";
+    /** checks if a given value is a bigint */
+    export const isBigInt = (x: unknown) => typeof x === "bigint";
+    /** checks if a given value is undefined */
+    export const isUndefined = (x: unknown) => x === undefined;
+    /** checks if a given value is a function */
+    export const isFunction = (x: unknown) => typeof x === "function";
+    /** checks if a given value is null */
+    export const isNull = (x: unknown) => x === null;
+    /** checks if a given value is an object */
+    export const isObject = (x: unknown) => _isObject(x);
+    /**
+     * checks if a given value is an instance of a constructor
+     * @note this is a curried function where the first argument is a constructor and the second is a value to check
+     * @returns a type predicate indicating whether `x` is an instance of the given constructor.
+     */
+    export function is<C extends Constructor>(ctor: C) {
+        return (x: unknown): x is InstanceType<C> => x instanceof ctor;
+    }
+}
+
 export function curry<T extends AnyFn, TAgg extends unknown[]>(
     func: T,
     agg?: TAgg,
