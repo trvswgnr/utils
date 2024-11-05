@@ -305,9 +305,9 @@ export function flip<A, B>(f: AnyFn) {
     return (b: B, a: A) => f(a, b);
 }
 
-
 export class StreamingResponse<T extends ReadableStream> extends Response {
-    constructor(stream: T, init: ResponseInit) {
+    constructor(stream: T, init?: ResponseInit) {
+        init = init ?? {};
         init.headers = {
             ...init.headers,
             "Transfer-Encoding": "chunked",
