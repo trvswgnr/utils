@@ -304,3 +304,17 @@ export function flip<A, B>(f: AnyFn) {
     if (f.length === 1) return (b: B) => (a: A) => f(a)(b);
     return (b: B, a: A) => f(a, b);
 }
+
+
+export class StreamingResponse<T extends ReadableStream> extends Response {
+    constructor(stream: T, init: ResponseInit) {
+        init.headers = {
+            ...init.headers,
+            "Transfer-Encoding": "chunked",
+            Connection: "keep-alive",
+            "Cache-Control": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+        };
+        super(stream, init);
+    }
+}
