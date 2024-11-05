@@ -305,8 +305,36 @@ export function flip<A, B>(f: AnyFn) {
     return (b: B, a: A) => f(a, b);
 }
 
+/**
+ * A specialized Response class for handling streaming data with appropriate HTTP headers.
+ * This class extends the standard Response class to provide proper configuration for
+ * streaming responses, particularly useful in server-sent events or large data transfers.
+ *
+ * @template T - Type parameter extending ReadableStream, representing the type of stream being handled
+ *
+ * @example
+ * ```ts
+ * const stream = new ReadableStream({...});
+ * const response = new StreamingResponse(stream, {
+ *   status: 200,
+ *   statusText: 'OK'
+ * });
+ * ```
+ *
+ * @remarks
+ * The constructor automatically sets several important headers for streaming:
+ * - Transfer-Encoding: chunked - Enables chunked transfer encoding
+ * - Connection: keep-alive - Maintains persistent connection
+ * - Cache-Control: no-cache - Prevents caching of the stream
+ * - X-Content-Type-Options: nosniff - Prevents MIME type sniffing
+ */
 export class StreamingResponse<T extends ReadableStream> extends Response {
-    constructor(stream: T, init: ResponseInit = {}) {
+    constructor(
+        /** The ReadableStream to be sent in the response */
+        stream: T,
+        /** Optional ResponseInit configuration object */
+        init: ResponseInit = {},
+    ) {
         init.headers = {
             ...init.headers,
             "Transfer-Encoding": "chunked",
@@ -318,17 +346,49 @@ export class StreamingResponse<T extends ReadableStream> extends Response {
     }
 }
 
+/**
+ * A controller class for managing streaming data with transformation capabilities.
+ * This class handles the creation and management of a readable stream, transforming
+ * data from a generator into a byte stream.
+ *
+ * @template T - The type of data being streamed before transformation to Uint8Array
+ *
+ * @example
+ * ```ts
+ * // Create a controller that streams numbers and converts them to strings
+ * const controller = new StreamController<number>(
+ *   function* () {
+ *     yield 1;
+ *     yield 2;
+ *     yield 3;
+ *   },
+ *   (num) => new TextEncoder().encode(num.toString())
+ * );
+ *
+ * // Create a response from the stream
+ * const response = controller.response({ headers: { "Content-Type": "text/plain" } });
+ * ```
+ */
 export class StreamController<T> {
+    /** The readable stream containing the transformed data */
     public readonly stream: ReadableStream<T>;
+    /** Writer interface for the underlying transform stream */
     private readonly writer: WritableStreamDefaultWriter<Uint8Array>;
+    /** Generator function that produces the data to be streamed */
     private readonly generator: () => AsyncIterator<T> | Iterator<T>;
+    /** Function to transform the generated data into bytes */
     private readonly transform: (data: T) => Uint8Array;
+    /** Error logging function, defaults to console.error */
     private readonly logger: (...args: any[]) => void | Promise<void> = console.error;
+    /** Flag indicating if the stream is in the process of closing */
     private isClosing: boolean = false;
 
     public constructor(
+        /** A function that returns an iterator or async iterator of type T */
         generator: () => AsyncIterator<T> | Iterator<T>,
+        /** A function that converts values of type T into Uint8Array */
         transform: (data: T) => Uint8Array,
+        /** Optional custom error logging function */
         logger: (...args: any[]) => void | Promise<void> = console.error,
     ) {
         this.generator = generator;
@@ -340,6 +400,12 @@ export class StreamController<T> {
         this.processStream();
     }
 
+    /**
+     * Safely closes the stream and cleans up resources.
+     * This method ensures the stream is only closed once.
+     *
+     * @returns A promise that resolves when cleanup is complete
+     */
     public async cleanup(): Promise<void> {
         if (this.isClosing) return;
         this.isClosing = true;
@@ -350,10 +416,24 @@ export class StreamController<T> {
         }
     }
 
+    /**
+     * Creates a StreamingResponse instance from the current stream.
+     *
+     * @param init - Optional ResponseInit configuration object
+     * @returns A new StreamingResponse configured for streaming
+     */
     public response(init?: ResponseInit) {
         return new StreamingResponse(this.stream, init);
     }
 
+    /**
+     * Internal method that processes the stream data.
+     * Handles the iteration over generated data, transformation, and error handling.
+     *
+     * @returns A promise that resolves when the stream is fully processed
+     *
+     * @private
+     */
     private async processStream(): Promise<void> {
         try {
             const iterator = { [Symbol.asyncIterator]: () => this.generator() };
