@@ -306,8 +306,7 @@ export function flip<A, B>(f: AnyFn) {
 }
 
 export class StreamingResponse<T extends ReadableStream> extends Response {
-    constructor(stream: T, init?: ResponseInit) {
-        init = init ?? {};
+    constructor(stream: T, init: ResponseInit = {}) {
         init.headers = {
             ...init.headers,
             "Transfer-Encoding": "chunked",
@@ -316,5 +315,67 @@ export class StreamingResponse<T extends ReadableStream> extends Response {
             "X-Content-Type-Options": "nosniff",
         };
         super(stream, init);
+    }
+}
+
+export class StreamController<T> {
+    public readonly stream: ReadableStream<T>;
+    private readonly writer: WritableStreamDefaultWriter<Uint8Array>;
+    private readonly generator: () => AsyncIterator<T> | Iterator<T>;
+    private readonly transform: (data: T) => Uint8Array;
+    private readonly logger: (...args: any[]) => void | Promise<void> = console.error;
+    private isClosing: boolean = false;
+
+    public constructor(
+        generator: () => AsyncIterator<T> | Iterator<T>,
+        transform: (data: T) => Uint8Array,
+        logger: (...args: any[]) => void | Promise<void> = console.error,
+    ) {
+        this.generator = generator;
+        this.transform = transform;
+        this.logger = logger;
+        const stream = new TransformStream<Uint8Array, T>();
+        this.writer = stream.writable.getWriter();
+        this.stream = stream.readable;
+        this.processStream();
+    }
+
+    public async cleanup(): Promise<void> {
+        if (this.isClosing) return;
+        this.isClosing = true;
+        try {
+            await this.writer.close();
+        } catch (e) {
+            // ignore errors during cleanup
+        }
+    }
+
+    public response(init?: ResponseInit) {
+        return new StreamingResponse(this.stream, init);
+    }
+
+    private async processStream(): Promise<void> {
+        try {
+            const iterator = { [Symbol.asyncIterator]: () => this.generator() };
+            for await (const item of iterator) {
+                if (this.isClosing) break;
+                const transformed = this.transform(item);
+                await this.writer.write(transformed);
+            }
+        } catch (e) {
+            if (!this.isClosing && e !== undefined) {
+                const error =
+                    e instanceof Error
+                        ? e
+                        : new Error(
+                              typeof e === "string"
+                                  ? e
+                                  : "unknown error while processing stream",
+                          );
+                await this.logger(`stream error: ${error.message}`);
+            }
+        } finally {
+            await this.cleanup();
+        }
     }
 }
