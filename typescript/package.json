@@ -54,6 +54,7 @@
         "delete": "bun ./scripts/delete.ts"
     },
     "devDependencies": {
+        "@biomejs/biome": "1.9.4",
         "@types/bun": "^1.1.6",
         "mitata": "^0.1.11",
         "tsup": "^8.2.2",
