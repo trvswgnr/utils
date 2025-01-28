@@ -38,8 +38,8 @@
 export type ShiftN<T extends readonly any[], N> = N extends keyof ShiftNMap<T>
     ? ShiftNMap<T>[N]
     : N extends number
-    ? any[]
-    : never;
+      ? any[]
+      : never;
 
 /**
  * Utility type that computes the length of a tuple type
@@ -194,12 +194,16 @@ export type RequireAll<T, K extends keyof T> = T & {
     [P in K]-?: Defined<T[P]>;
 };
 
-export type Intersect<A = {}, B = {}, C = {}, D = {}, E = {}, F = {}> = A &
-    B &
-    C &
-    D &
-    E &
-    F;
+type NonNullish = NonNullable<unknown>;
+
+export type Intersect<
+    A = NonNullish,
+    B = NonNullish,
+    C = NonNullish,
+    D = NonNullish,
+    E = NonNullish,
+    F = NonNullish,
+> = A & B & C & D & E & F;
 
 declare const BRAND: unique symbol;
 export type Branded<T, Brand> = T & { [BRAND]: Brand };
