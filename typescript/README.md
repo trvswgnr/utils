@@ -2,6 +2,25 @@
 
 A collection of useful TypeScript utilities that I find myself using often.
 
+To use the library, install it:
+```bash
+bun i @travvy/utils
+# or
+npm i @travvy/utils
+# or
+yarn add @travvy/utils
+# or
+pnpm add @travvy/utils
+```
+
+You can import specific modules like this:
+```ts
+import { Result } from "@travvy/utils/result";
+import { Option } from "@travvy/utils/option";
+import { Either } from "@travvy/utils/either";
+import { hash_djb2 } from "@travvy/utils/hash";
+```
+
 ## Modules
 
 ### Result
@@ -28,6 +47,8 @@ Key functions:
 
 Example:
 ```ts
+import { Result, Ok, Err } from "@travvy/utils/result";
+
 // Basic usage
 const divide = (a: number, b: number): Result<number, Error> => {
   if (b === 0) return Err(new Error("Division by zero"));
@@ -66,6 +87,8 @@ The `Err` namespace provides powerful error handling utilities:
 
 Example:
 ```ts
+import { Err } from "@travvy/utils/result";
+
 // Basic error creation
 const err1 = Err("something went wrong");
 const err2 = Err({ code: 404, message: "Not found" });
@@ -81,6 +104,58 @@ function validate(input: unknown): Result<string, ValidationError> {
     }
     return input; // note that we don't need to wrap in Ok()!
 }
+```
+
+### Option
+A zero-overhead Option type for handling nullable values:
+- `Option<T>` - Type representing either Some value (`T`) or None (`null | undefined`)
+- `Some<T>` - Non-null value case
+- `None` - Null/undefined case
+- Built-in TypeScript type narrowing
+- Minimal runtime overhead compared to raw null/undefined checks
+
+Key functions:
+- `Option.some(value)` - Create a Some value
+- `Option.none()` - Create a None value
+- `Option.isSome(value)` - Type guard for Some case
+- `Option.isNone(value)` - Type guard for None case
+- `Option.map(value, fn)` - Transform Some values
+- `Option.from(value)` - Convert nullable value to Option
+- `Option.of(fn, ...args)` - Safely execute functions that may throw
+- `Option.match(value, { Some, None })` - Pattern match on options
+
+Example:
+```ts
+import { Option, Some, None } from "@travvy/utils/option";
+
+// Basic usage
+const divide = (a: number, b: number): Option<number> => {
+  if (b === 0) return None();
+  return Some(a / b);
+};
+
+const x = divide(10, 2);
+
+if (Option.isSome(x)) {
+  console.log(x); // 5
+}
+
+if (Option.isNone(x)) {
+  console.log("Division by zero");
+}
+
+// Using Option.match for pattern matching
+divide(10, 2).match({
+  Some: result => console.log(result), // 5
+  None: () => console.error("Division by zero")
+});
+
+// Using Option.map to transform values
+const doubled = Option.map(divide(10, 2), x => x * 2);
+
+// Converting nullable values
+const value: string | null = null;
+const opt = Option.from(value); // None
 ```
 
 ### Effect
@@ -105,6 +180,8 @@ A comprehensive Either monad implementation for handling branching computations 
 
 Example:
 ```ts
+import { Either, Left, Right } from "@travvy/utils/either";
+
 const divide = (a: number, b: number): Either<string, number> =>
   b === 0 ? Left("Division by zero") : Right(a / b);
 
@@ -145,7 +222,7 @@ All hash functions:
 
 Example:
 ```ts
-import { hash_djb2, hash_sdbm } from "@travvy/utils";
+import { hash_djb2, hash_sdbm } from "@travvy/utils/hash";
 
 // Basic usage
 const hash1 = hash_djb2("hello world"); // 894552257
@@ -170,9 +247,6 @@ Collection of miscellaneous utilities:
 Numeric type utilities:
 - `i64` - 64-bit integer operations
 - `u64` - Unsigned 64-bit integer operations
-
-### Option
-Option/Maybe monad implementation for handling nullable values
 
 ## Development
 
