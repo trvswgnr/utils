@@ -9,7 +9,7 @@ import {
     type JsrJson,
     type PackageJson,
 } from "./utils";
-import { Ordering } from "../src/modules/misc/ordering";
+import { Ordering } from "../src/modules/misc/cmp";
 
 interface PublishedLog {
     jsr: {

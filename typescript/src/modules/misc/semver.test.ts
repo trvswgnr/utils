@@ -1,6 +1,6 @@
 import { describe, it, test, expect } from "bun:test";
 import { SemVer } from "./semver";
-import { Ordering } from "./ordering";
+import { Ordering } from "./cmp";
 
 describe("parse", () => {
     describe("X.Y.Z", () => {

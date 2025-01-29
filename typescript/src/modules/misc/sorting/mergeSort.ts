@@ -1,57 +1,37 @@
-/**
- * performs a merge sort on the given array
- *
- * this implementation of merge sort uses an in-place sorting technique,
- * avoiding the need for additional array allocations
- *
- * the algorithm works by:
- * - finding the maximum element in the array and adding 1 to it.
- * - using this element as a multiplier to store sorted values within the
- *   original array elements
- * - decoding these values in the final step to retrieve the sorted order
- *
- * @param arr - The array to be sorted.
- */
-export function mergeSort(arr: Array<number>) {
-    const max = Math.max(...arr) + 1;
-    mergeSortAux(arr, 0, arr.length - 1, max);
+import { type Comparable, Ordering, compare } from "../cmp";
+
+export function mergeSort<T extends Comparable>(arr: T[]): T[] {
+    if (arr.length < 2) return arr;
+    const mid = Math.floor(arr.length / 2);
+    const l = mergeSort(arr.slice(0, mid));
+    const r = mergeSort(arr.slice(mid));
+    return merge(l, r);
 }
 
-function mergeSortAux(arr: Array<number>, l: number, r: number, max: number) {
-    if (l < r) {
-        const mid = Math.floor((l + r) / 2);
-        mergeSortAux(arr, l, mid, max);
-        mergeSortAux(arr, mid + 1, r, max);
-        merge(arr, l, mid, r, max);
-    }
-}
+function merge<T extends Comparable>(first: T[], second: T[]): T[] {
+    const result: T[] = [];
+    let i = 0;
+    let j = 0;
 
-function merge(arr: Array<number>, l: number, m: number, r: number, max: number) {
-    let i = l;
-    let j = m + 1;
-    let k = l;
-    while (i <= m && j <= r) {
-        if (arr[i] % max <= arr[j] % max) {
-            arr[k] = arr[k] + (arr[i] % max) * max;
-            k++;
+    while (i < first.length && j < second.length) {
+        if (compare(first[i], second[j]) !== Ordering.Greater) {
+            result.push(first[i]);
             i++;
-            continue;
+        } else {
+            result.push(second[j]);
+            j++;
         }
-        arr[k] = arr[k] + (arr[j] % max) * max;
-        k++;
-        j++;
     }
-    while (i <= m) {
-        arr[k] = arr[k] + (arr[i] % max) * max;
-        k++;
+
+    while (i < first.length) {
+        result.push(first[i]);
         i++;
     }
-    while (j <= r) {
-        arr[k] = arr[k] + (arr[j] % max) * max;
-        k++;
+
+    while (j < second.length) {
+        result.push(second[j]);
         j++;
     }
-    for (i = l; i <= r; i++) {
-        arr[i] = Math.floor(arr[i] / max);
-    }
+
+    return result;
 }

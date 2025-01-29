@@ -1,6 +1,6 @@
 import { Result } from "../result";
 import type { Branded } from "../../types";
-import { Ordering } from "./ordering";
+import { Ordering } from "./cmp";
 import { u64 } from "../numbers";
 
 /**
