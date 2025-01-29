@@ -50,28 +50,33 @@ Example:
 import { Result, Ok, Err } from "@travvy/utils/result";
 
 // Basic usage
-const divide = (a: number, b: number): Result<number, Error> => {
-  if (b === 0) return Err(new Error("Division by zero"));
-  return Ok(a / b);
-};
+function divide(a: number, b: number): Result<number, Error> {
+    if (b === 0) return new Error("Division by zero");
+    return a / b;
+}
 
 // Using Result.match for pattern matching
-divide(10, 2).match({
-  Ok: result => console.log(result), // 5
-  Err: error => console.error(error.message)
+Result.match(divide(10, 2), {
+    Ok: (result) => console.log(result), // 5
+    Err: (error) => console.error(error.message),
 });
 
 // Using Result.of to catch errors
 const parse = Result.of((str: string) => {
-  const value = JSON.parse(str);
-  return Ok(value);
+    const value: unknown = JSON.parse(str);
+    if (typeof value !== "object") throw new Error("Expected object");
+    if (value === null) throw new Error("Expected non-null object");
+    return value;
 });
 
 // Custom error types
-const ParseError = Err.factory(class ParseError extends Error {});
-const safeParse = Result.of(ParseError)((str: string) => {
-  const value = JSON.parse(str);
-  return Ok(value);
+class ParseError extends Error {
+    static from = Err.factory(ParseError);
+}
+const safeParseFactory = Result.of(ParseError);
+const safeParse = safeParseFactory((str: string) => {
+    const value: unknown = JSON.parse(str);
+    return value;
 });
 ```
 
@@ -144,53 +149,66 @@ if (Option.isNone(x)) {
   console.log("Division by zero");
 }
 
+const res = divide(10, 2);
+
 // Using Option.match for pattern matching
-divide(10, 2).match({
-  Some: result => console.log(result), // 5
+Option.match(res, {
+  Some: x => console.log(x), // 5
   None: () => console.error("Division by zero")
 });
 
 // Using Option.map to transform values
-const doubled = Option.map(divide(10, 2), x => x * 2);
+const doubled = Option.map(res, x => x * 2);
 
 // Converting nullable values
 const value: string | null = null;
 const opt = Option.from(value); // None
 ```
 
-### Effect
-Effect monad implementation for handling side effects and error handling:
-- `run` - Execute effects and handle errors
-- `success` - Create successful effects
-- `isFailure` - Type guard for failed effects
-
 ### Either
-A comprehensive Either monad implementation for handling branching computations and error cases:
-- `Either<L, R>` - Type representing two possibilities: Left (`L`) or Right (`R`)
-- `Left<L>` - Typically represents failure/error cases
-- `Right<R>` - Typically represents success/valid cases
-- Full Functor, Applicative, and Monad typeclass implementations:
-  - `fmap` - Transform Right values while preserving Left
-  - `apply` - Apply functions wrapped in Either
-  - `bind` - Chain Either computations
-- Type-safe pattern matching via `match` method
-- Type guards with `isLeft` and `isRight`
-- Zero runtime overhead compared to manual branching
-- Implements Higher-Kinded Types (HKT) for advanced type-level programming
+A zero-overhead Either type for handling two possible types of values:
+- `Either<L, R>` - Type representing either Left (`L`) or Right (`R`) value
+- `Left<L>` - Left case (typically used for errors/failure states)
+- `Right<R>` - Right case (typically used for success values)
+- Built-in TypeScript type narrowing
+- Zero runtime overhead compared to union types
+
+Key functions:
+- `Either.left(value)` - Create a Left value
+- `Either.right(value)` - Create a Right value
+- `Either.isLeft(value)` - Type guard for Left case
+- `Either.isRight(value)` - Type guard for Right case
+- `Either.value(either)` - Extract the underlying value
+- `Either.getLeft(either)` - Extract Left value (throws if Right)
+- `Either.getRight(either)` - Extract Right value (throws if Left)
+- `Either.getLeftOr(either, default)` - Get Left value or default
+- `Either.getRightOr(either, default)` - Get Right value or default
+- `Either.mapLeft(either, fn)` - Transform Left values
+- `Either.mapRight(either, fn)` - Transform Right values
+- `Either.match(either, { Left, Right })` - Pattern match on either values
 
 Example:
 ```ts
 import { Either, Left, Right } from "@travvy/utils/either";
 
-const divide = (a: number, b: number): Either<string, number> =>
-  b === 0 ? Left("Division by zero") : Right(a / b);
+// Basic usage
+function divide(a: number, b: number): Either<string, number> {
+    if (b === 0) return Left("Division by zero");
+    return Right(a / b);
+}
 
-divide(10, 2)
-  .fmap(x => x * 2)
-  .match({
-    Left: err => console.error(err),
-    Right: result => console.log(result) // 10
-  });
+// Using pattern matching
+const res = divide(10, 2);
+Either.match(res, {
+    Left: (error) => console.error(error), 
+    Right: (value) => console.log(value) // 5
+});
+
+// Using map functions
+const doubled = Either.mapRight(res, x => x * 2);
+
+// Safe value extraction
+const value = Either.getRightOr(res, 0); // provides default if Left
 ```
 
 ### Other Functional Programming Utilities:
@@ -242,6 +260,12 @@ Collection of miscellaneous utilities:
 - `flip` - Function argument flipping
 - `curry` - Function currying
 - `StreamingResponse` - Enhanced Response class for streaming data
+
+### Effect
+Effect monad implementation for handling side effects and error handling:
+- `run` - Execute effects and handle errors
+- `success` - Create successful effects
+- `isFailure` - Type guard for failed effects
 
 ### Numbers
 Numeric type utilities:
