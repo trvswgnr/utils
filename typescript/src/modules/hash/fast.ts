@@ -2,7 +2,7 @@ import { UTF8Encoder } from "./codec";
 
 let encoder: TextEncoder | null = null;
 
-export const hash_djb2 = hash_djb2_encoder;
+export const hash_djb2 = hash_djb2_manual_encoding;
 
 export function hash_djb2_encoder(s: string): number {
     if (typeof s !== "string") throw new Error("Expected a string");
