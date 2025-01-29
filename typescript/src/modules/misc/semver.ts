@@ -55,7 +55,7 @@ export namespace SemVer {
             if (cause instanceof globalThis.Error) {
                 return new SemVer.Error(cause.message, { cause });
             }
-            return new SemVer.Error(`Unknown error`, { cause });
+            return new SemVer.Error("Unknown error", { cause });
         }
 
         public static is(x: unknown): x is Error {
@@ -195,16 +195,16 @@ export namespace SemVer {
 
 export function validateMatch(match: RegExpMatchArray | null) {
     if (!match || !match.groups) {
-        throw new SemVer.Error(`Malformed semver string`);
+        throw new SemVer.Error("Malformed semver string");
     }
     if (!match.groups.major) {
-        throw new SemVer.Error(`Major version is missing`);
+        throw new SemVer.Error("Major version is missing");
     }
     if (!match.groups.minor) {
-        throw new SemVer.Error(`Minor version is missing`);
+        throw new SemVer.Error("Minor version is missing");
     }
     if (!match.groups.patch) {
-        throw new SemVer.Error(`Patch version is missing`);
+        throw new SemVer.Error("Patch version is missing");
     }
 }
 
