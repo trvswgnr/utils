@@ -4,11 +4,7 @@ export { Result, Ok, Err };
 
 type Result<T, E extends Error> = Ok<T> | Err<E>;
 
-type Ok<T> = T extends Error
-    ? never
-    : IsAny<T> extends true
-        ? never
-        : T;
+type Ok<T> = T extends Error ? never : IsAny<T> extends true ? never : T;
 
 type Err<E extends Error> = E & Error;
 
@@ -39,10 +35,22 @@ namespace Err {
         if (e instanceof Error) {
             return e;
         }
+        if (typeof e === "string") {
+            return new Error(e);
+        }
         if (typeof e === "object" && e !== null) {
+            if (
+                "message" in e &&
+                typeof e.message === "string" &&
+                "name" in e &&
+                typeof e.name === "string"
+            ) {
+                Object.setPrototypeOf(e, Error.prototype);
+                return e as Error;
+            }
             return new Error(JSON.stringify(e));
         }
-        return new Error(String(e));
+        return new Error(`Unknown error: ${String(e)}`, { cause: e });
     }
 
     /**
