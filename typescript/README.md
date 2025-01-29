@@ -131,11 +131,30 @@ Comprehensive functional programming utilities:
 - `Semigroup` - Semigroup typeclass implementation
 
 ### Hash
-Fast hashing algorithms:
-- `hash_djb2` - DJB2 hash implementation
-- `hash_djb2_xor` - DJB2-XOR variant
-- `hash_sdbm` - SDBM hash algorithm
-- `UTF8Encoder` - UTF-8 encoding/decoding utilities
+Fast and efficient string hashing utilities with UTF-8 support:
+
+- `hash_djb2(str)` - DJB2 hash algorithm (using TextEncoder)
+- `hash_djb2_xor(str)` - DJB2 XOR variant for better distribution
+- `hash_sdbm(str)` - SDBM hash algorithm for string hashing
+
+All hash functions:
+- Return 32-bit unsigned integers
+- Handle UTF-8 strings correctly (including emoji and surrogate pairs)
+- Are deterministic (same input always produces same output)
+- Throw on non-string inputs
+
+Example:
+```ts
+import { hash_djb2, hash_sdbm } from "@travvy/utils";
+
+// Basic usage
+const hash1 = hash_djb2("hello world"); // 894552257
+const hash2 = hash_sdbm("hello world"); // 430867652
+
+// Works with Unicode
+const hash3 = hash_djb2("Hello, 世界!"); // 2250154912
+const hash4 = hash_djb2("😂🦀"); // Different hash for emoji
+```
 
 ### Misc
 Collection of miscellaneous utilities:
