@@ -24,11 +24,13 @@
             "recommended": true,
             "suspicious": {
                 "noExplicitAny": "off",
-                "noShadowRestrictedNames": "off"
+                "noShadowRestrictedNames": "off",
+                "useValidTypeof": "off"
             },
             "style": {
                 "useExportType": "off",
-                "noNonNullAssertion": "off"
+                "noNonNullAssertion": "off",
+                "noArguments": "off"
             }
         }
     },
