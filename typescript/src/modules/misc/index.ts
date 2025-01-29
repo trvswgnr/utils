@@ -381,7 +381,7 @@ export class StreamController<T> {
     /** Error logging function, defaults to console.error */
     private readonly logger: (...args: any[]) => void | Promise<void> = console.error;
     /** Flag indicating if the stream is in the process of closing */
-    private isClosing: boolean = false;
+    private isClosing = false;
 
     public constructor(
         /** A function that returns an iterator or async iterator of type T */
