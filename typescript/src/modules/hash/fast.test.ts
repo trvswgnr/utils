@@ -1,124 +1,107 @@
 import { describe, expect, it } from "bun:test";
-import { hash_djb2, hash_djb2_xor, hash_sdbm } from "./fast";
+import {
+    hash_djb2_manual_encoding,
+    hash_djb2_buffer,
+    hash_djb2_encoder,
+    hash_djb2_custom_encoder_array,
+    hash_sdbm,
+} from "./fast";
 
-describe("hash_djb2", () => {
-    // these were generated with the reference implementation in c
-    const REFERENCE = [
-        ["Empty string", "", 5381],
-        ["Simple ASCII", "hello world", 894552257],
-        ["Long ASCII string", "a".repeat(80), 3154686037],
-        ["Special characters", "!@#$%^&*()_+", 3006899291],
-        ["Unicode characters", "こんにちは世界", 1141554997],
-        ["Emoji", "😂🦀👨‍👨‍👧‍👦", 2401348973],
-        ["Mixed ASCII and Unicode", "Hello, 世界!", 2250154912],
-        ["Control characters", "\t\n\r", 193387141],
-        ["Similar strings 1", "abc", 193485963],
-        ["Similar strings 2", "abd", 193485964],
-        ["Surrogate pair", "𐐷", 2095260236],
-    ] as const;
+describe("hash_djb2_manual_encoding", run_tests(hash_djb2_manual_encoding));
+describe("hash_djb2_buffer", run_tests(hash_djb2_buffer));
+describe("hash_djb2_encoder", run_tests(hash_djb2_encoder));
+describe("hash_djb2_custom_encoder_array", run_tests(hash_djb2_custom_encoder_array));
 
-    describe("reference hashes", () => {
-        REFERENCE.forEach(([description, input, hash]) => {
-            it(`should match ${description}`, () => {
-                expect(hash_djb2(input)).toBe(hash);
-            });
+function run_tests(hash_djb2: (s: string) => number) {
+    return () => {
+        // these were generated with the reference implementation in c
+        const REFERENCE = [
+            ["Empty string", "", 5381],
+            ["Simple ASCII", "hello world", 894552257],
+            ["Long ASCII string", "a".repeat(80), 3154686037],
+            ["Special characters", "!@#$%^&*()_+", 3006899291],
+            ["Unicode characters", "こんにちは世界", 1141554997],
+            ["Emoji", "😂🦀👨‍👨‍👧‍👦", 2401348973],
+            ["Mixed ASCII and Unicode", "Hello, 世界!", 2250154912],
+            ["Control characters", "\t\n\r", 193387141],
+            ["Similar strings 1", "abc", 193485963],
+            ["Similar strings 2", "abd", 193485964],
+            ["Surrogate pair", "𐐷", 2095260236],
+        ] as const;
+
+        describe("reference hashes", () => {
+            for (const [description, input, hash] of REFERENCE) {
+                it(`should match ${description}`, () => {
+                    expect(hash_djb2(input)).toBe(hash);
+                });
+            }
         });
-    });
-    it("should return the same hash for identical strings", () => {
-        const input = "hello world";
-        expect(hash_djb2(input)).toBe(hash_djb2(input));
-    });
-
-    it("should return different hashes for different strings", () => {
-        expect(hash_djb2("hello")).not.toBe(hash_djb2("world"));
-    });
-
-    it("should handle empty string", () => {
-        expect(hash_djb2("")).toBe(5381); // The initial hash value
-    });
-
-    it("should handle long strings", () => {
-        const longString = "a".repeat(1000);
-        expect(hash_djb2(longString)).toBe(3510421101);
-    });
-
-    it("should handle strings with special characters", () => {
-        expect(hash_djb2("!@#$%^&*()_+")).toBe(3006899291);
-    });
-
-    it("should handle strings with unicode characters", () => {
-        expect(hash_djb2("こんにちは世界")).toBe(1141554997);
-        expect(hash_djb2("😂🦀👨‍👨‍👧‍👦")).toBe(2401348973);
-    });
-
-    it("should return a 32-bit unsigned integer", () => {
-        const result = hash_djb2("test");
-        expect(Number.isInteger(result)).toBe(true);
-        expect(result).toBeGreaterThanOrEqual(0);
-        expect(result).toBeLessThanOrEqual(4294967295); // Max 32-bit unsigned int
-    });
-
-    it("should be deterministic", () => {
-        const inputs = ["a", "b", "hello", "world", "1234", "!@#$"];
-        inputs.forEach((input) => {
-            const hash1 = hash_djb2(input);
-            const hash2 = hash_djb2(input);
-            expect(hash1).toBe(hash2);
+        it("should return the same hash for identical strings", () => {
+            const input = "hello world";
+            expect(hash_djb2(input)).toBe(hash_djb2(input));
         });
-    });
 
-    it("should produce different hashes for similar strings", () => {
-        expect(hash_djb2("abc")).not.toBe(hash_djb2("abd"));
-        expect(hash_djb2("hello world")).not.toBe(hash_djb2("hello world "));
-    });
-
-    it("should handle control characters", () => {
-        expect(hash_djb2("\t\n\r")).toBe(193387141);
-    });
-
-    it("should distribute hashes somewhat uniformly", () => {
-        const hashes = new Set();
-        for (let i = 0; i < 1000; i++) {
-            hashes.add(hash_djb2(i.toString()));
-        }
-        expect(hashes.size).toBeGreaterThan(950); // Expect > 95% unique hashes
-    });
-
-    it("should handle null input", () => {
-        // @ts-ignore
-        expect(() => hash_djb2(null)).toThrow();
-    });
-});
-
-describe("hash_djb2_xor", () => {
-    const REFERENCE = [
-        ["Empty string", "", 5381],
-        ["Simple ASCII", "hello world", 4173747013],
-        ["Long ASCII string", "a".repeat(80), 2191442437],
-        ["Special characters", "!@#$%^&*()_+", 1703018977],
-        ["Unicode characters", "こんにちは世界", 3539588181],
-        ["Emoji", "😂🦀👨‍👨‍👧‍👦", 4090322871],
-        ["Mixed ASCII and Unicode", "Hello, 世界!", 3556076190],
-        ["Control characters", "\t\n\r", 193384427],
-        ["Similar strings 1", "abc", 193409669],
-        ["Similar strings 2", "abd", 193409666],
-        ["Surrogate pair", "𐐷", 2083446658],
-    ] as const;
-
-    describe("reference hashes", () => {
-        REFERENCE.forEach(([description, input, hash]) => {
-            it(`should match ${description}`, () => {
-                expect(hash_djb2_xor(input)).toBe(hash);
-            });
+        it("should return different hashes for different strings", () => {
+            expect(hash_djb2("hello")).not.toBe(hash_djb2("world"));
         });
-    });
 
-    it("should handle long strings", () => {
-        const longString = "a".repeat(10000);
-        expect(() => hash_djb2_xor(longString)).not.toThrow();
-        expect(hash_djb2_xor(longString)).toBe(398888453);
-    });
-});
+        it("should handle empty string", () => {
+            expect(hash_djb2("")).toBe(5381); // The initial hash value
+        });
+
+        it("should handle long strings", () => {
+            const longString = "a".repeat(1000);
+            expect(hash_djb2(longString)).toBe(3510421101);
+        });
+
+        it("should handle strings with special characters", () => {
+            expect(hash_djb2("!@#$%^&*()_+")).toBe(3006899291);
+        });
+
+        it("should handle strings with unicode characters", () => {
+            expect(hash_djb2("こんにちは世界")).toBe(1141554997);
+            expect(hash_djb2("😂🦀👨‍👨‍👧‍👦")).toBe(2401348973);
+        });
+
+        it("should return a 32-bit unsigned integer", () => {
+            const result = hash_djb2("test");
+            expect(Number.isInteger(result)).toBe(true);
+            expect(result).toBeGreaterThanOrEqual(0);
+            expect(result).toBeLessThanOrEqual(4294967295); // Max 32-bit unsigned int
+        });
+
+        it("should be deterministic", () => {
+            const inputs = ["a", "b", "hello", "world", "1234", "!@#$"];
+            for (const input of inputs) {
+                const hash1 = hash_djb2(input);
+                const hash2 = hash_djb2(input);
+                expect(hash1).toBe(hash2);
+            }
+        });
+
+        it("should produce different hashes for similar strings", () => {
+            expect(hash_djb2("abc")).not.toBe(hash_djb2("abd"));
+            expect(hash_djb2("hello world")).not.toBe(hash_djb2("hello world "));
+        });
+
+        it("should handle control characters", () => {
+            expect(hash_djb2("\t\n\r")).toBe(193387141);
+        });
+
+        it("should distribute hashes somewhat uniformly", () => {
+            const hashes = new Set();
+            for (let i = 0; i < 1000; i++) {
+                hashes.add(hash_djb2(i.toString()));
+            }
+            expect(hashes.size).toBeGreaterThan(950); // Expect > 95% unique hashes
+        });
+
+        it("should handle null input", () => {
+            // @ts-ignore
+            expect(() => hash_djb2(null)).toThrow();
+        });
+    };
+}
 
 describe("hash_sdbm", () => {
     const REFERENCE = [
@@ -136,11 +119,11 @@ describe("hash_sdbm", () => {
     ] as const;
 
     describe("reference hashes", () => {
-        REFERENCE.forEach(([description, input, hash]) => {
+        for (const [description, input, hash] of REFERENCE) {
             it(`should match ${description}`, () => {
                 expect(hash_sdbm(input)).toBe(hash);
             });
-        });
+        }
     });
 
     it("should return the same hash for the same input string", () => {
