@@ -1,5 +1,3 @@
-import type { Result, Ok } from "../result";
-
 export { Option, Some, None };
 
 type Some<T> = NonNullable<T>;
@@ -60,15 +58,15 @@ namespace Option {
         return value ? fns.Some(value) : fns.None();
     }
 
-    export function toResult<T extends {}, E extends Error>(
-        onNone: () => E,
-        o: Option<T>,
-    ): Result<T, E> {
-        if (isNone(o)) {
-            return onNone();
-        }
-        return o as Ok<T>;
-    }
+    // export function toResult<T extends {}, E extends Error>(
+    //     onNone: () => E,
+    //     o: Option<T>,
+    // ): Result<T, E> {
+    //     if (isNone(o)) {
+    //         return onNone();
+    //     }
+    //     return o as Ok<T>;
+    // }
 
     // export function toEither<L, R>(_none: () => L, o: Option<R>): Either<L, R> {
     //     return isSome(o) ? Either.right(o) : Either.left(_none());
