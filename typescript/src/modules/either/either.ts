@@ -45,7 +45,8 @@ function Right<R>(value: R): Either<never, R> {
         [TYPE]: RIGHT,
         [VALUE]: value,
         *[Symbol.iterator](): Generator<never, R, unknown> {
-            return right[VALUE];
+            yield right[VALUE] as never;
+            throw new Error("Unreachable");
         },
     };
     return right;
@@ -53,7 +54,7 @@ function Right<R>(value: R): Either<never, R> {
 
 type Either<L, R> = Left<L> | Right<R>;
 
-module Either {
+namespace Either {
     export function left<L>(value: L): Either<L, never> {
         return Left(value);
     }
