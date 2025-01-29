@@ -26,7 +26,8 @@
                 "noExplicitAny": "off"
             },
             "style": {
-                "useExportType": "off"
+                "useExportType": "off",
+                "noNonNullAssertion": "off"
             }
         }
     },
