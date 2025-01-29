@@ -124,16 +124,8 @@ namespace Result {
         from: (e: unknown) => E;
     }): <A extends readonly any[], R>(
         fn: (...args: A) => Ok<R>,
-    ) => (...args: A) => Result<R, E>;
-    export function of<E extends Error>(ErrConstructor: {
-        from: (e: unknown) => E;
-    }): <A extends readonly any[], R>(
-        fn: (...args: A) => Ok<R>,
         ...args: A
     ) => Result<R, E>;
-    export function of<A extends readonly any[], R>(
-        fn: (...args: A) => Ok<R>,
-    ): (...args: A) => Result<R, Error>;
     export function of<A extends readonly any[], R>(
         fn: (...args: A) => Ok<R>,
         ...args: A
