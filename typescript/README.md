@@ -62,22 +62,29 @@ Result.match(divide(10, 2), {
 });
 
 // Using Result.of to catch errors
-const parse = Result.of((str: string) => {
-    const value: unknown = JSON.parse(str);
-    if (typeof value !== "object") throw new Error("Expected object");
-    if (value === null) throw new Error("Expected non-null object");
-    return value;
-});
+function parse(x: string) {
+    return Result.of((str: string) => {
+        const value: unknown = JSON.parse(str);
+        if (typeof value !== "object") throw new Error("Expected object");
+        if (value === null) throw new Error("Expected non-null object");
+        return value;
+    }, x);
+}
+
+const x = parse("{}");
 
 // Custom error types
 class ParseError extends Error {
-    static from = Err.factory(ParseError);
+    static from(e: unknown) {
+        return new ParseError(JSON.stringify(e));
+    }
 }
-const safeParseFactory = Result.of(ParseError);
-const safeParse = safeParseFactory((str: string) => {
-    const value: unknown = JSON.parse(str);
-    return value;
-});
+function safeParse(x: string) {
+    return Result.of(ParseError)((str: string) => {
+        const value = JSON.parse(str);
+        return Ok(value);
+    }, x);
+}
 ```
 
 #### Err
