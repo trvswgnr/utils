@@ -35,9 +35,13 @@ export function isOrd(value: unknown): value is Ord<unknown> {
         typeof value === "object" &&
         value !== null &&
         "cmp" in value &&
+        typeof value.cmp === "function" &&
         "max" in value &&
+        typeof value.max === "function" &&
         "min" in value &&
-        "clamp" in value
+        typeof value.min === "function" &&
+        "clamp" in value &&
+        typeof value.clamp === "function"
     );
 }
 
