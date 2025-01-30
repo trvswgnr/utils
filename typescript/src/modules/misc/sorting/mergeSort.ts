@@ -14,22 +14,22 @@ function merge<T extends Comparable>(first: T[], second: T[]): T[] {
     let j = 0;
 
     while (i < first.length && j < second.length) {
-        if (compare(first[i], second[j]) !== Ordering.Greater) {
-            result.push(first[i]);
+        if (compare(first[i]!, second[j]!) !== Ordering.Greater) {
+            result.push(first[i]!);
             i++;
         } else {
-            result.push(second[j]);
+            result.push(second[j]!);
             j++;
         }
     }
 
     while (i < first.length) {
-        result.push(first[i]);
+        result.push(first[i]!);
         i++;
     }
 
     while (j < second.length) {
-        result.push(second[j]);
+        result.push(second[j]!);
         j++;
     }
 

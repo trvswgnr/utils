@@ -102,7 +102,7 @@ describe("mergeSort", () => {
         const sorted = mergeSort(input);
         expect(sorted.map((item) => item.value)).toEqual([1, 2, 3, 3]);
         // Check stability: first 3 should have id 1, second 3 should have id 3
-        expect(sorted[2].id).toBe(1);
-        expect(sorted[3].id).toBe(3);
+        expect(sorted[2]!.id).toBe(1);
+        expect(sorted[3]!.id).toBe(3);
     });
 });
