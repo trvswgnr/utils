@@ -1,7 +1,16 @@
 import type { AnyFn, Args, Branded, Constructor, Curried, Fn } from "../../types";
 
-export { fetchJson } from "./fetchJson";
-export { SemVer } from "./semver";
+export { fetchJson, intoError, isOkResponse, parseWith, resultOf } from "./fetchJson";
+export { SemVer, validateMatch } from "./semver";
+export {
+    Ordering,
+    compare,
+    isOrd,
+    type Comparable,
+    type Ord,
+    type PartialEq,
+    type PartialOrd,
+} from "./cmp";
 
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
@@ -207,8 +216,8 @@ export function isObjectWithKeyOfType<
     T extends Constructor
         ? InstanceType<T>
         : T extends keyof PrimitiveMap
-        ? PrimitiveMap[T]
-        : never
+          ? PrimitiveMap[T]
+          : never
 > {
     if (!isObject(x) || !(key in x)) return false;
     if (isConstructor(type)) return x[key] instanceof type;
