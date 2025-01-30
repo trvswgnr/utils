@@ -9,6 +9,7 @@ export interface List<T> {
     ): string;
     concat(...items: ConcatArray<T>[]): List<T>;
     concat(...items: T[]): List<T>;
+    concat(items: List<T>): List<T>;
     join(separator?: string): string;
     slice(start?: number, end?: number): List<T>;
     indexOf(searchElement: T, fromIndex?: number): number;
@@ -134,8 +135,41 @@ export interface List<T> {
     toSpliced(start: number, deleteCount?: number): List<T>;
     with(index: number, value: T): List<T>;
     [Symbol.iterator](): IterableIterator<T>;
-    // prettier-ignore
-    [Symbol.unscopables]: { readonly [x: number]: boolean | undefined; readonly length?: boolean; toString?: boolean; toLocaleString?: boolean; concat?: boolean; join?: boolean; slice?: boolean; indexOf?: boolean; lastIndexOf?: boolean; every?: boolean; some?: boolean; forEach?: boolean; map?: boolean; filter?: boolean; reduce?: boolean; reduceRight?: boolean; find?: boolean; findIndex?: boolean; entries?: boolean; keys?: boolean; values?: boolean; includes?: boolean; flatMap?: boolean; flat?: boolean; at?: boolean; findLast?: boolean; findLastIndex?: boolean; toReversed?: boolean; toSorted?: boolean; toSpliced?: boolean; with?: boolean;[Symbol.iterator]?: boolean; readonly [Symbol.unscopables]?: boolean; };
+    [Symbol.unscopables]: {
+        readonly [x: number]: boolean | undefined;
+        readonly length?: boolean;
+        toString?: boolean;
+        toLocaleString?: boolean;
+        concat?: boolean;
+        join?: boolean;
+        slice?: boolean;
+        indexOf?: boolean;
+        lastIndexOf?: boolean;
+        every?: boolean;
+        some?: boolean;
+        forEach?: boolean;
+        map?: boolean;
+        filter?: boolean;
+        reduce?: boolean;
+        reduceRight?: boolean;
+        find?: boolean;
+        findIndex?: boolean;
+        entries?: boolean;
+        keys?: boolean;
+        values?: boolean;
+        includes?: boolean;
+        flatMap?: boolean;
+        flat?: boolean;
+        at?: boolean;
+        findLast?: boolean;
+        findLastIndex?: boolean;
+        toReversed?: boolean;
+        toSorted?: boolean;
+        toSpliced?: boolean;
+        with?: boolean;
+        [Symbol.iterator]?: boolean;
+        readonly [Symbol.unscopables]?: boolean;
+    };
 }
 
 export interface ListConstructor {
