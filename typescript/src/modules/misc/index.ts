@@ -11,6 +11,7 @@ export {
     type PartialEq,
     type PartialOrd,
 } from "./cmp";
+import type { IsNever } from "./type-utils";
 
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
@@ -125,7 +126,7 @@ export function isConstructor<T, A extends Args>(x: unknown): x is Constructor<T
     }
 }
 
-type PrimitiveMap = {
+type BasicTypeMap = {
     string: string;
     number: number;
     boolean: boolean;
@@ -154,6 +155,12 @@ type PrimitiveMap = {
  */
 export function isObject(x: unknown): x is Record<PropertyKey, unknown> {
     return typeof x === "object" && x !== null;
+}
+
+export type UnknownFn = Fn<readonly unknown[], unknown>;
+
+export function isFunction(x: unknown): x is UnknownFn {
+    return typeof x === "function";
 }
 
 /**
@@ -186,11 +193,11 @@ export function isObjectWithKey<K extends string>(
  * @param type - The primitive type to check for.
  * @returns A type predicate indicating whether x is a Record with key `K` of type `PrimitiveMap[T]`.
  */
-export function isObjectWithKeyOfType<K extends string, T extends keyof PrimitiveMap>(
+export function isObjectWithKeyOfType<K extends string, T extends keyof BasicTypeMap>(
     x: unknown,
     key: K,
     type: T,
-): x is Record<K, PrimitiveMap[T]>;
+): x is Record<K, BasicTypeMap[T]>;
 /**
  * Checks if the given value is an object with a specific key of a constructor type.
  *
@@ -206,7 +213,7 @@ export function isObjectWithKeyOfType<K extends string, T extends Constructor>(
 ): x is Record<K, InstanceType<T>>;
 export function isObjectWithKeyOfType<
     K extends string,
-    T extends keyof PrimitiveMap | Constructor,
+    T extends keyof BasicTypeMap | Constructor,
 >(
     x: unknown,
     key: K,
@@ -215,8 +222,8 @@ export function isObjectWithKeyOfType<
     K,
     T extends Constructor
         ? InstanceType<T>
-        : T extends keyof PrimitiveMap
-          ? PrimitiveMap[T]
+        : T extends keyof BasicTypeMap
+          ? BasicTypeMap[T]
           : never
 > {
     if (!isObject(x) || !(key in x)) return false;
@@ -234,9 +241,9 @@ export function isObjectWithKeyOfType<
  * @param t - The primitive type to check against.
  * @returns A type predicate indicating whether x is of type PrimitiveMap[T].
  */
-export function isType<T extends keyof PrimitiveMap>(
+export function isType<T extends keyof BasicTypeMap>(
     t: T,
-): (x: unknown) => x is PrimitiveMap[T];
+): (x: unknown) => x is BasicTypeMap[T];
 /**
  * Checks if a value is of a specific primitive type.
  *
@@ -245,10 +252,10 @@ export function isType<T extends keyof PrimitiveMap>(
  * @param t - The primitive type to check against.
  * @returns A type predicate indicating whether x is of type PrimitiveMap[T].
  */
-export function isType<T extends keyof PrimitiveMap>(
+export function isType<T extends keyof BasicTypeMap>(
     t: T,
     x: unknown,
-): x is PrimitiveMap[T];
+): x is BasicTypeMap[T];
 /**
  * Checks if a value is an instance of a specific constructor.
  *
@@ -467,4 +474,72 @@ export class StreamController<T> {
             await this.cleanup();
         }
     }
+}
+
+export type Primitive = null | string | number | boolean | symbol | bigint | undefined;
+
+export function isPrimitive(x: unknown): x is Primitive {
+    return (
+        x === null ||
+        typeof x === "string" ||
+        typeof x === "number" ||
+        typeof x === "boolean" ||
+        typeof x === "symbol" ||
+        typeof x === "bigint" ||
+        typeof x === "undefined"
+    );
+}
+
+export function isNotPrimitive(x: unknown): x is object {
+    return !isPrimitive(x);
+}
+
+type ObjectPaths<T> = T extends object
+    ? { [K in keyof T]: `${Exclude<K, symbol>}${"" | `.${ObjectPaths<T[K]>}`}` }[keyof T]
+    : never;
+type DeepGetHelper<T, K extends ObjectPaths<T>> = K extends `${infer P}.${infer R}`
+    ? DeepGetHelper<
+          P extends keyof T ? T[P] : never,
+          P extends keyof T ? (R extends ObjectPaths<T[P]> ? R : never) : never
+      >
+    : K extends keyof T
+      ? T[K]
+      : never;
+export type DeepGet<T extends object, K extends ObjectPaths<T>> = DeepGetHelper<T, K>;
+
+class DeepGetError extends Error {
+    static override readonly name = "DeepGetError";
+    constructor(message: string) {
+        super(message);
+        this.name = "DeepGetError";
+    }
+}
+
+/**
+ * Retrieves a property from an object using a dot-separated path.
+ *
+ * @template T - The type of the object to retrieve the property from.
+ * @template K - The dot-separated path to the property.
+ * @param obj - The object to retrieve the property from.
+ * @param path - The dot-separated path to the property.
+ * @returns The property value.
+ * @note Keys with `.` in their name are not supported since the path is delimited by `.`.
+ * @throws {DeepGetError} If the path is invalid or the property cannot be retrieved.
+ */
+export function deepGet<T extends object, K extends ObjectPaths<T>>(
+    obj: T,
+    path: true extends IsNever<DeepGet<T, K>> ? never : K,
+): DeepGet<T, K> {
+    const keys = path.split(".");
+    let result: unknown = obj;
+    for (const key of keys) {
+        if (!isNotPrimitive(result)) {
+            throw new DeepGetError("Cannot get property of primitive");
+        }
+        if (!(key in result)) {
+            throw new DeepGetError(`Key '${key}' not found in object`);
+        }
+        result = result[key as never];
+    }
+    return result as DeepGet<T, K>;
 }
