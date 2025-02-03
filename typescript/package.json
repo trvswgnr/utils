@@ -1,6 +1,6 @@
 {
     "name": "@travvy/utils",
-    "version": "0.0.74",
+    "version": "0.0.75",
     "main": "dist/index.js",
     "devDependencies": {
         "@biomejs/biome": "1.9.4",
