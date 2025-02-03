@@ -1,5 +1,4 @@
 import type { AnyFn, Args, Branded, Constructor, Curried, Fn } from "../../types";
-
 export { fetchJson, intoError, isOkResponse, parseWith, resultOf } from "./fetchJson";
 export { SemVer, validateMatch } from "./semver";
 export {
@@ -11,7 +10,6 @@ export {
     type PartialEq,
     type PartialOrd,
 } from "./cmp";
-import type { IsNever } from "./type-utils";
 
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
@@ -494,6 +492,24 @@ export function isNotPrimitive(x: unknown): x is object {
     return !isPrimitive(x);
 }
 
+export function createBasicError<const T extends string>(name: T) {
+    return class extends Error {
+        static override readonly name = name;
+        constructor(message: string) {
+            super(message);
+            this.name = name;
+        }
+    };
+}
+
+class NotImplementedError extends Error {
+    static override readonly name = "NotImplementedError";
+    constructor(fnName: string) {
+        super(`'${fnName}' is not implemented`);
+        this.name = "NotImplementedError";
+    }
+}
+
 type ObjectPaths<T> = T extends object
     ? { [K in keyof T]: `${Exclude<K, symbol>}${"" | `.${ObjectPaths<T[K]>}`}` }[keyof T]
     : never;
@@ -515,31 +531,55 @@ class DeepGetError extends Error {
     }
 }
 
-/**
- * Retrieves a property from an object using a dot-separated path.
- *
- * @template T - The type of the object to retrieve the property from.
- * @template K - The dot-separated path to the property.
- * @param obj - The object to retrieve the property from.
- * @param path - The dot-separated path to the property.
- * @returns The property value.
- * @note Keys with `.` in their name are not supported since the path is delimited by `.`.
- * @throws {DeepGetError} If the path is invalid or the property cannot be retrieved.
- */
-export function deepGet<T extends object, K extends ObjectPaths<T>>(
-    obj: T,
-    path: true extends IsNever<DeepGet<T, K>> ? never : K,
-): DeepGet<T, K> {
-    const keys = path.split(".");
-    let result: unknown = obj;
-    for (const key of keys) {
-        if (!isNotPrimitive(result)) {
-            throw new DeepGetError("Cannot get property of primitive");
-        }
-        if (!(key in result)) {
-            throw new DeepGetError(`Key '${key}' not found in object`);
-        }
-        result = result[key as never];
+export function* zip<T, U>(a: Iterable<T>, b: Iterable<U>): Generator<[T, U]> {
+    const iterA = a[Symbol.iterator]();
+    const iterB = b[Symbol.iterator]();
+    while (true) {
+        const resultA = iterA.next();
+        const resultB = iterB.next();
+        if (resultA.done !== resultB.done) return;
+        if (resultA.done) break;
+
+        yield [resultA.value, resultB.value];
     }
-    return result as DeepGet<T, K>;
 }
+
+const TS_ERROR = Symbol("TS_ERROR");
+type TSError<T> = { [TS_ERROR]: T };
+
+export const FAIL = Symbol("fail");
+export type FAIL = typeof FAIL;
+
+export const yeet: <E>(e?: E) => never = (e) => {
+    if (e === undefined) throw new Error("yeeted");
+    throw e;
+};
+
+export const tryCatch = <A extends readonly any[], T, C>(
+    tryFn: (...args: A) => T,
+    catchFn: (e: unknown) => C,
+    ...args: A
+) => {
+    try {
+        return tryFn(...args);
+    } catch (e) {
+        return catchFn(e);
+    }
+};
+
+export function predicate<T = TSError<"explicit type param required">>(
+    f: (x: unknown) => NoInfer<T>,
+) {
+    return (x: unknown): x is T => {
+        try {
+            f(x);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+}
+
+export type Identity<T> = T;
+export type IdentityFn = <const T>(x: T) => Identity<T>;
+export const identity: IdentityFn = <const T>(x: T) => x;
