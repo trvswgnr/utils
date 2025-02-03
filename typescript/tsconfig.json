@@ -30,9 +30,5 @@
         "exactOptionalPropertyTypes": true,
         "useUnknownInCatchVariables": true,
         "noImplicitOverride": true
-
-        // "paths": {
-        //     "~/*": ["./src/*"]
-        // }
     }
 }
