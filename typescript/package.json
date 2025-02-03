@@ -2,7 +2,13 @@
     "name": "@travvy/utils",
     "version": "0.0.74",
     "main": "dist/index.js",
-    "type": "module",
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@types/bun": "^1.1.6",
+        "mitata": "^0.1.11",
+        "tsup": "^8.2.2",
+        "typescript": "^5.7.3"
+    },
     "exports": {
         ".": {
             "import": "./dist/index.js",
@@ -44,6 +50,9 @@
     "files": [
         "dist"
     ],
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "clean": "bun ./scripts/clean.ts",
         "new": "bun ./scripts/new.ts",
@@ -53,14 +62,5 @@
         "test": "bun ./scripts/test.ts",
         "delete": "bun ./scripts/delete.ts"
     },
-    "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@types/bun": "^1.1.6",
-        "mitata": "^0.1.11",
-        "tsup": "^8.2.2",
-        "typescript": "^5.5.4"
-    },
-    "publishConfig": {
-        "access": "public"
-    }
+    "type": "module"
 }
