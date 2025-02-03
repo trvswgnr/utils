@@ -31,6 +31,9 @@
                 "useExportType": "off",
                 "noNonNullAssertion": "off",
                 "noArguments": "off"
+            },
+            "complexity": {
+                "useArrowFunction": "off"
             }
         }
     },
