@@ -115,7 +115,7 @@ function deepEqualHelper<A, B>(objA: A, objB: B, map: WeakMap<A & object, B>): b
         return false;
     }
 
-    // sort keys to ensure consistent comparison
+    // sort keys to make sure comparison is consistent
     keysA.sort();
     keysB.sort();
 
