@@ -74,7 +74,7 @@ export function loggedMethod<This, Args extends any[], Return>(
 }
 
 /**
- * A decorator that ensures a class implements a static method.
+ * A decorator that enforces that a class implements a static method
  *
  * @example
  * ```ts
@@ -416,7 +416,7 @@ export class StreamController<T> {
 
     /**
      * Safely closes the stream and cleans up resources.
-     * This method ensures the stream is only closed once.
+     * This method makes sure the stream is only closed once.
      *
      * @returns A promise that resolves when cleanup is complete
      */
