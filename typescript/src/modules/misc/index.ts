@@ -10,6 +10,7 @@ export {
     type PartialEq,
     type PartialOrd,
 } from "./cmp";
+export * from "./serialize";
 
 /**
  * Performs an unsafe type cast from `unknown` to a specified type `T`.
@@ -502,7 +503,7 @@ export function createBasicError<const T extends string>(name: T) {
     };
 }
 
-class NotImplementedError extends Error {
+export class NotImplementedError extends Error {
     static override readonly name = "NotImplementedError";
     constructor(fnName: string) {
         super(`'${fnName}' is not implemented`);
@@ -523,7 +524,7 @@ type DeepGetHelper<T, K extends ObjectPaths<T>> = K extends `${infer P}.${infer 
       : never;
 export type DeepGet<T extends object, K extends ObjectPaths<T>> = DeepGetHelper<T, K>;
 
-class DeepGetError extends Error {
+export class DeepGetError extends Error {
     static override readonly name = "DeepGetError";
     constructor(message: string) {
         super(message);
