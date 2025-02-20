@@ -23,9 +23,9 @@
         "noErrorTruncation": true,
 
         // Some stricter flags (disabled by default)
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "noPropertyAccessFromIndexSignature": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noPropertyAccessFromIndexSignature": true,
         "noUncheckedIndexedAccess": true,
         "exactOptionalPropertyTypes": true,
         "useUnknownInCatchVariables": true,
