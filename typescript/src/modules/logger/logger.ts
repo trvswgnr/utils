@@ -2,26 +2,11 @@ import { Queue } from "../queue";
 import * as Mutex from "../mutex/mutex";
 
 export const LogLevel = {
-    Debug: {
-        name: "DEBUG",
-        value: 0,
-    },
-    Info: {
-        name: "INFO",
-        value: 1,
-    },
-    Warn: {
-        name: "WARN",
-        value: 2,
-    },
-    Error: {
-        name: "ERROR",
-        value: 3,
-    },
-    Fatal: {
-        name: "FATAL",
-        value: 4,
-    },
+    Debug: { name: "DEBUG", value: 0 },
+    Info: { name: "INFO", value: 1 },
+    Warn: { name: "WARN", value: 2 },
+    Error: { name: "ERROR", value: 3 },
+    Fatal: { name: "FATAL", value: 4 },
 } as const;
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
@@ -54,6 +39,7 @@ export function formatLogMessage(
  * sink interface for log output destinations
  */
 export interface Sink {
+    id: string;
     /**
      * write a log message to the sink
      */
@@ -64,6 +50,13 @@ export interface Sink {
  * console sink implementation that writes to stdout/stderr
  */
 export class ConsoleSink implements Sink {
+    public static type = "console" as const;
+    public id: string;
+
+    constructor(id?: string) {
+        this.id = id ?? "console";
+    }
+
     write(level: LogLevel, message: string, metadata: Metadata): void {
         const formattedMessage = formatLogMessage(level, message, metadata);
 
@@ -87,10 +80,13 @@ export class ConsoleSink implements Sink {
  * file sink implementation that writes to a file
  */
 export class FileSink implements Sink {
+    public static type = "file" as const;
+    public id: string;
     private filePath: string;
     private fs: typeof import("node:fs/promises") | null = null;
 
-    constructor(filePath: string) {
+    constructor(filePath: string, id?: string) {
+        this.id = id ?? "file";
         this.filePath = filePath;
     }
 
@@ -111,9 +107,12 @@ export class FileSink implements Sink {
 }
 
 export class WorkerSink implements Sink {
+    public static type = "worker" as const;
+    public id: string;
     private workerPool: Worker[];
     private currentWorkerIndex: number;
-    constructor(workerUrl: string | URL, numWorkers: number) {
+    constructor(workerUrl: string | URL, numWorkers: number, id?: string) {
+        this.id = id ?? "worker";
         this.workerPool = Array(numWorkers)
             .fill(null)
             .map(() => new Worker(workerUrl));
@@ -192,26 +191,12 @@ export class Logger<const Sinks extends Sink[]> implements ILogger<Sinks> {
         // Acquire the mutex to indicate processing is active
         const release = Mutex.acquire(this.processingMutex);
         // Process all items in the queue
-        while (this.queue.size > 0) {
+        while (!this.queue.isEmpty()) {
             const item = this.queue.dequeue();
-            if (item) {
-                // Temporarily release the mutex while processing the item
-                // to allow other operations to proceed
-                release(this.processingMutex);
-
-                // Process the item
-                for (const sink of this.sinks) {
-                    if (this.shouldLog(item.level, this.minLevel)) {
-                        sink.write(item.level, item.message, item.metadata);
-                    }
-                }
-
-                // Re-acquire the mutex to check the queue again
-                if (this.queue.size > 0) {
-                    Mutex.acquire(this.processingMutex);
-                } else {
-                    // Queue is empty, we're done
-                    return;
+            // Process the item
+            for (const sink of this.sinks) {
+                if (this.shouldLog(item.level, this.minLevel)) {
+                    sink.write(item.level, item.message, item.metadata);
                 }
             }
         }

@@ -2,6 +2,7 @@ import { Logger, LogLevel, type Sink, type Metadata, WorkerSink } from "./logger
 import { describe, it, expect } from "bun:test";
 
 class TestSink implements Sink {
+    public id = "test";
     public logs: string[] = [];
 
     write(level: LogLevel, message: string, metadata: Metadata): void {
@@ -61,6 +62,7 @@ describe("Logger", () => {
     it("should not block the main thread", async () => {
         // create a sink that simulates slow processing
         class SlowSink implements Sink {
+            public id = "slow";
             public logs: string[] = [];
             public processingDelay: number;
 
