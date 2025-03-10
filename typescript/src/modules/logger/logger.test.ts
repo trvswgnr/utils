@@ -1,4 +1,11 @@
-import { Logger, LogLevel, type Sink, type Metadata, WorkerSink } from "./logger";
+import {
+    Logger,
+    LogLevel,
+    type Sink,
+    type Metadata,
+    WorkerSink,
+    FileSink,
+} from "./logger";
 import { describe, it, expect } from "bun:test";
 
 class TestSink implements Sink {
@@ -140,4 +147,33 @@ describe("Logger", () => {
         const totalTime = performance.now() - startTime;
         expect(totalTime).toBeLessThan(100);
     });
+
+    it("should log messages to a file", async () => {
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+        const filename = "test.log";
+        const tempDir = await fs.mkdtemp("taw-logger-test");
+        const filePath = path.join(tempDir, filename);
+        // delete the file if it exists
+        await fs.unlink(filePath).catch(noop);
+        const logger = new Logger([new FileSink(filePath)], LogLevel.Debug);
+        logger.info("test123");
+        await logger.wait(async () => {
+            // get the contents of the file
+            const contents = await fs.readFile(filePath, "utf-8");
+            expect(contents).toMatch(getLogEntryMatchRegex("test123", {}));
+        });
+        // delete the file
+        await fs.unlink(filePath);
+        // delete the temp directory
+        await fs.rmdir(tempDir);
+    });
 });
+
+function getLogEntryMatchRegex(message: string, metadata: Metadata) {
+    return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z \\[INFO\\] ${message} ${JSON.stringify(metadata)}\n$`,
+    );
+}
+
+function noop() {}

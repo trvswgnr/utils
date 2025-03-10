@@ -36,7 +36,7 @@ export function formatLogMessage(
 }
 
 /**
- * sink interface for log output destinations
+ * interface for log output destinations
  */
 export interface Sink {
     id: string;
@@ -47,7 +47,7 @@ export interface Sink {
 }
 
 /**
- * console sink implementation that writes to stdout/stderr
+ * writes logs to stdout/stderr based on log level
  */
 export class ConsoleSink implements Sink {
     public static type = "console" as const;
@@ -77,7 +77,7 @@ export class ConsoleSink implements Sink {
 }
 
 /**
- * file sink implementation that writes to a file
+ * persists logs to a file system location
  */
 export class FileSink implements Sink {
     public static type = "file" as const;
@@ -101,7 +101,7 @@ export class FileSink implements Sink {
         const formattedMessage = formatLogMessage(level, message, metadata);
         const logLine = `${formattedMessage}\n`;
 
-        // append to file using node fs api which is supported by bun
+        // lazy-load fs module to improve startup time
         this.getFs().then((fs) => fs.appendFile(this.filePath, logLine));
     }
 }
@@ -120,7 +120,7 @@ export class WorkerSink implements Sink {
     }
 
     write(level: LogLevel, message: string, metadata: Metadata): void {
-        // send log to worker
+        // distribute log processing across worker pool for better throughput
         this.getNextWorker().postMessage({ level, message, metadata });
     }
 
@@ -171,15 +171,14 @@ export class Logger<const Sinks extends Sink[]> implements ILogger<Sinks> {
     }
 
     log(level: LogLevel, message: string, metadata: Metadata): void {
-        // add to queue
+        // queue logs to prevent blocking the main thread
         this.queue.enqueue({ level, message, metadata });
         this.triggerProcessing();
     }
 
     private triggerProcessing(): void {
-        // Only start processing if:
-        // 1. The mutex is not locked (no processing is happening)
-        // 2. There are items in the queue
+        // only start processing when no active processing exists and queue has items
+        // this prevents redundant processing attempts
         if (!Mutex.isLocked(this.processingMutex) && this.queue.size > 0) {
             const release = Mutex.acquire(this.processingMutex);
             queueMicrotask(this.processQueue.bind(this));
@@ -188,12 +187,12 @@ export class Logger<const Sinks extends Sink[]> implements ILogger<Sinks> {
     }
 
     private async processQueue(): Promise<void> {
-        // Acquire the mutex to indicate processing is active
+        // mutex prevents concurrent queue processing which could lead to race conditions
         const release = Mutex.acquire(this.processingMutex);
-        // Process all items in the queue
+
         while (!this.queue.isEmpty()) {
             const item = this.queue.dequeue();
-            // Process the item
+
             for (const sink of this.sinks) {
                 if (this.shouldLog(item.level, this.minLevel)) {
                     sink.write(item.level, item.message, item.metadata);
@@ -204,7 +203,7 @@ export class Logger<const Sinks extends Sink[]> implements ILogger<Sinks> {
     }
 
     /**
-     * determine if a log should be processed based on level comparison
+     * filters logs below configured threshold to reduce noise
      */
     private shouldLog(messageLevel: LogLevel, sinkMinLevel: LogLevel): boolean {
         return messageLevel.value >= sinkMinLevel.value;
