@@ -1,24 +1,24 @@
 import { spawn as bunSpawn } from "bun";
 
-class SpawnError extends Error {
-    public readonly type = "SpawnError";
-    constructor(public code: unknown) {
-        const c = SpawnError.getCode(code);
-        super(`Command failed with code ${c}`);
-    }
+// class SpawnError extends Error {
+//     public readonly type = "SpawnError";
+//     constructor(public code: unknown) {
+//         const c = SpawnError.getCode(code);
+//         super(`Command failed with code ${c}`);
+//     }
 
-    static from(x: unknown) {
-        if (x instanceof SpawnError) return x;
-        if (typeof x === "number") return new SpawnError(x);
-        return new SpawnError(69);
-    }
+//     static from(x: unknown) {
+//         if (x instanceof SpawnError) return x;
+//         if (typeof x === "number") return new SpawnError(x);
+//         return new SpawnError(69);
+//     }
 
-    static getCode(x: unknown) {
-        if (x instanceof SpawnError) return x.code;
-        if (typeof x === "number") return x;
-        return 69;
-    }
-}
+//     static getCode(x: unknown) {
+//         if (x instanceof SpawnError) return x.code;
+//         if (typeof x === "number") return x;
+//         return 69;
+//     }
+// }
 
 export function spawn(cmds: string[]): Catchable<string, Error> {
     return Catchable(async () => {
@@ -29,8 +29,8 @@ export function spawn(cmds: string[]): Catchable<string, Error> {
         const stdout: ReadableStream<Uint8Array> = p.stdout;
         const stderr: ReadableStream<Uint8Array> = p.stderr;
 
-        let stdoutBuf: Array<number> = [];
-        let stderrBuf: Array<number> = [];
+        const stdoutBuf: Array<number> = [];
+        const stderrBuf: Array<number> = [];
         const stdoutChunks = await Bun.readableStreamToArray(stdout);
         for (const chunk of stdoutChunks) {
             stdoutBuf.push(...chunk);
@@ -52,10 +52,12 @@ type Catchable<T, in out E> = {
     catch<U>(fn: (e: E) => U): Catchable<T | U, E>;
 };
 
+// biome-ignore lint/suspicious/noRedeclare: <explanation>
 async function Catchable<T>(
     p: (() => Promise<T>) | Promise<T>,
     // @ts-expect-error
 ): Catchable<T, Error>;
+// biome-ignore lint/suspicious/noRedeclare: <explanation>
 async function Catchable<T, E>(
     intoErrorFn: (x: unknown) => E,
     p: (() => Promise<T>) | Promise<T>,
@@ -63,8 +65,9 @@ async function Catchable<T, E>(
 ): Catchable<T, E>;
 async function Catchable<T, E>(
     intoErrorFn: ((x: unknown) => E) | (() => Promise<T>) | Promise<T>,
-    p?: (() => Promise<T>) | Promise<T>,
+    _p?: (() => Promise<T>) | Promise<T>,
 ) {
+    let p = _p;
     let _intoErrFn = intoError;
     // check if Err is an object with a from method
     if (typeof p !== "undefined") {

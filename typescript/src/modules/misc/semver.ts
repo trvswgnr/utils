@@ -136,12 +136,12 @@ export namespace SemVer {
 
         validateMatch(match);
 
-        const major = u64.unsafe_parse(match!.groups!.major);
-        const minor = u64.unsafe_parse(match!.groups!.minor);
-        const patch = u64.unsafe_parse(match!.groups!.patch);
+        const major = u64.unsafe_parse(match!.groups!["major"]);
+        const minor = u64.unsafe_parse(match!.groups!["minor"]);
+        const patch = u64.unsafe_parse(match!.groups!["patch"]);
 
-        const prerelease = unsafe_parseIdentifiers(match!.groups!.prerelease);
-        const metadata = unsafe_parseIdentifiers(match!.groups!.buildmetadata);
+        const prerelease = unsafe_parseIdentifiers(match!.groups!["prerelease"]);
+        const metadata = unsafe_parseIdentifiers(match!.groups!["buildmetadata"]);
 
         return {
             major,
@@ -197,13 +197,13 @@ export function validateMatch(match: RegExpMatchArray | null) {
     if (!match || !match.groups) {
         throw new SemVer.Error("Malformed semver string");
     }
-    if (!match.groups.major) {
+    if (!match.groups["major"]) {
         throw new SemVer.Error("Major version is missing");
     }
-    if (!match.groups.minor) {
+    if (!match.groups["minor"]) {
         throw new SemVer.Error("Minor version is missing");
     }
-    if (!match.groups.patch) {
+    if (!match.groups["patch"]) {
         throw new SemVer.Error("Patch version is missing");
     }
 }

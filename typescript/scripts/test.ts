@@ -5,7 +5,6 @@ import {
     joinPaths,
     pathFromRoot,
     readdir,
-    Log,
     exitAfter,
 } from "./utils";
 

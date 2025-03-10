@@ -1,6 +1,6 @@
 import type { Branded } from "../../types";
 
-type BigIntArg = bigint | boolean | number | string;
+// type BigIntArg = bigint | boolean | number | string;
 
 export type u64 = Branded<bigint, "u64">;
 export namespace u64 {

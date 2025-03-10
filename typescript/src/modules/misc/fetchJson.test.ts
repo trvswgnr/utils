@@ -107,7 +107,7 @@ describe("fetchJson", () => {
     });
 });
 
-function returnTrue<T>(x: unknown): x is T {
+function returnTrue<T>(_: unknown): _ is T {
     return true;
 }
 

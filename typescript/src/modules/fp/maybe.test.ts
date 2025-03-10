@@ -2,7 +2,7 @@ import { Maybe, Just, Nothing } from "./maybe";
 import { compose } from "./compose";
 import { id } from "./identity";
 import { describe, test, expect } from "bun:test";
-import { foldr, cons } from "./misc";
+import { foldr } from "./misc";
 
 describe("Maybe", () => {
     describe("Semigroup", () => {

@@ -1,4 +1,4 @@
-import type { Constructor, PickRequired, RequireOne } from "../../types";
+import type { Constructor, RequireOne } from "../../types";
 import type * as HKT from "./hkt";
 
 /**

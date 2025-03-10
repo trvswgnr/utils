@@ -45,6 +45,10 @@
         "./numbers": {
             "import": "./dist/numbers.js",
             "require": "./dist/numbers.cjs"
+        },
+        "./queue": {
+            "import": "./dist/queue.js",
+            "require": "./dist/queue.cjs"
         }
     },
     "files": [

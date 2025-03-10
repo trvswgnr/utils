@@ -47,6 +47,6 @@ export interface MonadInstance<M extends HKT.Kind>
 export const bind = <M extends HKT.Kind>(
     m: RequireOne<MonadStatic<M>, "bind">,
 ) => m.bind;
-export const then = <M extends HKT.Kind>(
+export const _then = <M extends HKT.Kind>(
     m: RequireOne<MonadStatic<M>, "then">,
 ) => m.then;

@@ -33,7 +33,8 @@
                 "noArguments": "off"
             },
             "complexity": {
-                "useArrowFunction": "off"
+                "useArrowFunction": "off",
+                "useLiteralKeys": "off"
             }
         }
     },

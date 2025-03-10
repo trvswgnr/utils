@@ -31,7 +31,7 @@ async function main() {
 }
 
 async function publish() {
-    const { jsrJson, pkgJson, jsrJsonPath, pkgJsonPath } =
+    const { jsrJson, pkgJson } =
         await loadJsonFiles();
     const newVersion = incrementVersion(jsrJson.version);
 

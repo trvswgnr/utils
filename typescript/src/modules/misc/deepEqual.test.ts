@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { deepEqual as nodeAssertDeepEquals, throws, AssertionError } from "node:assert";
+import { deepEqual as nodeAssertDeepEquals } from "node:assert";
 import { deepEquals } from "./deepEqual";
 
 function nodeDeepEquals<A, B>(a: A | B, b: B): a is B {
@@ -11,15 +11,15 @@ function nodeDeepEquals<A, B>(a: A | B, b: B): a is B {
     }
 }
 
-function notDeepEquals<A, B>(a: A | B, b: B) {
-    return !deepEquals(a, b);
-}
+// function notDeepEquals<A, B>(a: A | B, b: B) {
+//     return !deepEquals(a, b);
+// }
 
-function assertDeepEquals<A, B>(a: A | B, b: B) {
-    if (!deepEquals(a, b)) {
-        throw new Error("deepEquals failed");
-    }
-}
+// function assertDeepEquals<A, B>(a: A | B, b: B) {
+//     if (!deepEquals(a, b)) {
+//         throw new Error("deepEquals failed");
+//     }
+// }
 
 describe("parity with assert.deepEqual", () => {
     describe("primitive values", () => {
@@ -365,13 +365,13 @@ describe("parity with assert.deepEqual", () => {
                 get value() {
                     return 1;
                 },
-                set value(v) {},
+                set value(_) {},
             };
             const obj2 = {
                 get value() {
                     return 1;
                 },
-                set value(v) {},
+                set value(_) {},
             };
             expect(deepEquals(obj1, obj2)).toBe(nodeDeepEquals(obj1, obj2));
         });
@@ -897,15 +897,15 @@ describe("typed arrays and buffers", () => {
     });
 });
 
-class MyRegExp extends RegExp {
-    constructor(...args: Parameters<typeof RegExp>) {
-        super(...args);
-        this[0] = "1";
-    }
-    [x: number]: string;
-}
+// class MyRegExp extends RegExp {
+//     constructor(...args: Parameters<typeof RegExp>) {
+//         super(...args);
+//         this[0] = "1";
+//     }
+//     [x: number]: string;
+// }
 
-const date = new Date("2016");
+// const date = new Date("2016");
 
 class MyDate extends Date {
     constructor(...args: any[]) {
@@ -916,7 +916,7 @@ class MyDate extends Date {
     [x: number]: string;
 }
 
-const date2 = new MyDate("2016");
+// const date2 = new MyDate("2016");
 
 // TODO: need to pass these tests
 // describe("deepEqual should pass for these weird cases", () => {

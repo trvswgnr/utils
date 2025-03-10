@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import { $, type ShellExpression, type ShellPromise } from "bun";
+import { $, type ShellExpression } from "bun";
 
 export const PACKAGE_NAME = "@travvy/utils";
 
