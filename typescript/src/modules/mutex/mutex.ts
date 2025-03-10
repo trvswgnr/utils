@@ -160,3 +160,7 @@ export async function withLockAsync<R>(
         _release(mutex);
     }
 }
+
+export function isLocked(mutex: Instance): boolean {
+    return Atomics.load(mutex, 0) === 1;
+}
