@@ -76,6 +76,31 @@ export class ConsoleSink implements Sink {
     }
 }
 
+interface LogRotationOptions {
+    /**
+     * the frequency of log rotation
+     * - "daily" - rotate daily
+     * - "weekly" - rotate weekly
+     * - "monthly" - rotate monthly
+     * - number - size in bytes
+     */
+    frequency: "daily" | "weekly" | "monthly" | number;
+    /**
+     * the number of log files to keep before deleting the oldest ones
+     */
+    maxBackups: number;
+    /**
+     * post-rotation actions
+     */
+    postRotationActions: (() => void)[];
+}
+
+interface FileSinkOptions {
+    filePath: string;
+    rotationOptions?: LogRotationOptions;
+    id?: string;
+}
+
 /**
  * persists logs to a file system location
  */
@@ -83,26 +108,226 @@ export class FileSink implements Sink {
     public static type = "file" as const;
     public id: string;
     private filePath: string;
-    private fs: typeof import("node:fs/promises") | null = null;
+    private rotationOptions: LogRotationOptions;
+    private static fs: typeof import("node:fs/promises") | null = null;
+    private static path: typeof import("node:path") | null = null;
+    private static encoder: TextEncoder | null = null;
+    private lastRotationCheck = 0;
+    private static ROTATION_CHECK_INTERVAL_MS = 60000; // check once per minute
 
-    constructor(filePath: string, id?: string) {
-        this.id = id ?? "file";
-        this.filePath = filePath;
+    constructor(options: FileSinkOptions) {
+        this.id = options.id ?? "file";
+        this.filePath = options.filePath;
+        this.rotationOptions = {
+            frequency: "daily",
+            maxBackups: 7,
+            postRotationActions: [],
+            ...(options.rotationOptions ?? {}),
+        };
     }
-
-    private async getFs() {
-        if (this.fs === null) {
-            this.fs = await import("node:fs/promises");
+    private static async getDeps() {
+        if (FileSink.fs === null) {
+            FileSink.fs = await import("node:fs/promises");
         }
-        return this.fs;
+        if (FileSink.path === null) {
+            FileSink.path = await import("node:path");
+        }
+        if (FileSink.encoder === null) {
+            FileSink.encoder = new TextEncoder();
+        }
+        return { fs: FileSink.fs, path: FileSink.path, encoder: FileSink.encoder };
     }
 
     write(level: LogLevel, message: string, metadata: Metadata): void {
         const formattedMessage = formatLogMessage(level, message, metadata);
         const logLine = `${formattedMessage}\n`;
 
-        // lazy-load fs module to improve startup time
-        this.getFs().then((fs) => fs.appendFile(this.filePath, logLine));
+        type FileHandle = Awaited<ReturnType<typeof import("node:fs/promises")["open"]>>;
+        let fileHandle: FileHandle | null = null;
+        // lazy-load deps to improve startup time when not used
+        FileSink.getDeps()
+            .then(async ({ fs, path, encoder }) => {
+                const filename = path.basename(this.filePath);
+                const dirname = path.dirname(this.filePath);
+                // create the directory if it doesn't exist
+                await fs.mkdir(dirname, { recursive: true });
+                const fullPath = path.join(dirname, filename);
+
+                // check if rotation is needed
+                await this.checkRotation(fullPath, fs, path);
+
+                // open the file for appending
+                fileHandle = await fs.open(fullPath, "a");
+                // write the log line to the file
+                await fileHandle.write(encoder.encode(logLine));
+            })
+            .finally(async () => {
+                // close the file stream
+                await fileHandle?.close();
+            });
+    }
+
+    /**
+     * checks if log rotation is needed based on configured frequency
+     */
+    private async checkRotation(
+        fullPath: string,
+        fs: typeof import("node:fs/promises"),
+        path: typeof import("node:path"),
+    ): Promise<void> {
+        const now = Date.now();
+
+        // throttle rotation checks to avoid excessive file stats
+        if (now - this.lastRotationCheck < FileSink.ROTATION_CHECK_INTERVAL_MS) {
+            return;
+        }
+
+        this.lastRotationCheck = now;
+
+        // check if file exists before attempting rotation
+        const stats = await fs.stat(fullPath).catch(() => null);
+        if (!stats) return;
+
+        const shouldRotate = await this.shouldRotate(stats, fullPath, fs);
+        if (shouldRotate) {
+            await this.rotateLog(fullPath, fs, path);
+        }
+    }
+
+    /**
+     * determines if rotation is needed based on time or size
+     */
+    private async shouldRotate(
+        stats: Awaited<ReturnType<typeof import("node:fs/promises")["stat"]>>,
+        fullPath: string,
+        fs: typeof import("node:fs/promises"),
+    ): Promise<boolean> {
+        const { frequency } = this.rotationOptions;
+
+        // size-based rotation
+        if (typeof frequency === "number") {
+            return stats.size >= frequency;
+        }
+
+        // time-based rotation
+        try {
+            // check for rotation marker file
+            const markerPath = `${fullPath}.rotation_marker`;
+            const marker = await fs.readFile(markerPath, "utf-8").catch(() => "");
+            const lastRotation = marker ? new Date(marker) : new Date(0);
+            const now = new Date();
+
+            switch (frequency) {
+                case "daily":
+                    return (
+                        now.getDate() !== lastRotation.getDate() ||
+                        now.getMonth() !== lastRotation.getMonth() ||
+                        now.getFullYear() !== lastRotation.getFullYear()
+                    );
+                case "weekly": {
+                    // get the week number - wrapped in block to fix linter error
+                    const getWeekNumber = (d: Date) => {
+                        const firstDayOfYear = new Date(d.getFullYear(), 0, 1);
+                        const pastDaysOfYear =
+                            (d.getTime() - firstDayOfYear.getTime()) / 86400000;
+                        return Math.ceil(
+                            (pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7,
+                        );
+                    };
+                    return (
+                        getWeekNumber(now) !== getWeekNumber(lastRotation) ||
+                        now.getFullYear() !== lastRotation.getFullYear()
+                    );
+                }
+                case "monthly":
+                    return (
+                        now.getMonth() !== lastRotation.getMonth() ||
+                        now.getFullYear() !== lastRotation.getFullYear()
+                    );
+                default:
+                    return false;
+            }
+        } catch (error) {
+            // if we can't determine rotation time, default to rotating
+            return true;
+        }
+    }
+
+    /**
+     * performs log rotation by renaming current log file and creating a new one
+     */
+    private async rotateLog(
+        fullPath: string,
+        fs: typeof import("node:fs/promises"),
+        path: typeof import("node:path"),
+    ): Promise<void> {
+        const { maxBackups, postRotationActions } = this.rotationOptions;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const dirname = path.dirname(fullPath);
+        const basename = path.basename(fullPath);
+        const rotatedFilename = `${basename}.${timestamp}`;
+        const rotatedPath = path.join(dirname, rotatedFilename);
+
+        try {
+            // rename current log file with timestamp
+            await fs.rename(fullPath, rotatedPath);
+
+            // update rotation marker
+            const markerPath = `${fullPath}.rotation_marker`;
+            await fs.writeFile(markerPath, new Date().toISOString());
+
+            // clean up old backups
+            await this.cleanupOldBackups(dirname, basename, fs, path, maxBackups);
+
+            // execute post-rotation actions
+            for (const action of postRotationActions) {
+                try {
+                    action();
+                } catch (error) {
+                    // silently handle action errors to avoid disrupting logging
+                }
+            }
+        } catch (error) {
+            // silently handle rotation errors to avoid disrupting logging
+        }
+    }
+
+    /**
+     * removes old backup files when they exceed maxBackups
+     */
+    private async cleanupOldBackups(
+        dirname: string,
+        basename: string,
+        fs: typeof import("node:fs/promises"),
+        path: typeof import("node:path"),
+        maxBackups: number,
+    ): Promise<void> {
+        try {
+            // list all files in directory
+            const files = await fs.readdir(dirname);
+
+            // filter to find backup files matching our pattern
+            const backupRegex = new RegExp(`^${basename}\\..*`);
+            const backupFiles = files
+                .filter((file) => backupRegex.test(file))
+                .map((file) => ({
+                    name: file,
+                    path: path.join(dirname, file),
+                    // extract timestamp from filename for sorting
+                    timestamp: file.replace(`${basename}.`, ""),
+                }))
+                .sort((a, b) => b.timestamp.localeCompare(a.timestamp)); // newest first
+
+            // delete files beyond the maxBackups limit
+            if (backupFiles.length > maxBackups) {
+                const filesToDelete = backupFiles.slice(maxBackups);
+                for (const file of filesToDelete) {
+                    await fs.unlink(file.path).catch(() => {});
+                }
+            }
+        } catch (error) {
+            // silently handle cleanup errors to avoid disrupting logging
+        }
     }
 }
 

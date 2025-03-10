@@ -6,7 +6,7 @@ import {
     WorkerSink,
     FileSink,
 } from "./logger";
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 
 class TestSink implements Sink {
     public id = "test";
@@ -156,8 +156,9 @@ describe("Logger", () => {
         const filePath = path.join(tempDir, filename);
         // delete the file if it exists
         await fs.unlink(filePath).catch(noop);
-        const logger = new Logger([new FileSink(filePath)], LogLevel.Debug);
+        const logger = new Logger([new FileSink({ filePath })], LogLevel.Debug);
         logger.info("test123");
+        await Bun.sleep(100);
         await logger.wait(async () => {
             // get the contents of the file
             const contents = await fs.readFile(filePath, "utf-8");
@@ -177,3 +178,316 @@ function getLogEntryMatchRegex(message: string, metadata: Metadata) {
 }
 
 function noop() {}
+
+describe("FileSink Rotation", () => {
+    let tempDir: string;
+    let fs: typeof import("node:fs/promises");
+    let path: typeof import("node:path");
+
+    beforeEach(async () => {
+        fs = await import("node:fs/promises");
+        path = await import("node:path");
+        tempDir = await fs.mkdtemp("taw-logger-rotation-test");
+    });
+
+    afterEach(async () => {
+        // clean up all files in temp directory
+        const files = await fs.readdir(tempDir);
+        for (const file of files) {
+            await fs.unlink(path.join(tempDir, file)).catch(noop);
+        }
+        await fs.rmdir(tempDir);
+    });
+
+    it("should rotate logs based on size", async () => {
+        const filename = "size-rotation.log";
+        const filePath = path.join(tempDir, filename);
+
+        // Define the max backups value
+        const maxBackups = 3;
+
+        // Force rotation by directly calling the rotation method
+        // Create a file sink with a special test hook
+        const fileSink = new FileSink({
+            filePath,
+            rotationOptions: {
+                frequency: 10, // small size to trigger rotation easily
+                maxBackups,
+                postRotationActions: [],
+            },
+        });
+
+        // Create a logger with the file sink
+        const logger = new Logger([fileSink], LogLevel.Debug);
+
+        // Create the initial log file with some content
+        await fs.writeFile(filePath, "initial content");
+
+        // Write a log message
+        logger.info("before-rotation");
+        await Bun.sleep(100);
+
+        // Get access to the private methods for testing
+        // @ts-expect-error accessing private method for testing
+        const originalRotateLog = fileSink.rotateLog;
+
+        // Create a promise to track when rotation is complete
+        let rotationComplete = false;
+        const rotationPromise = new Promise<void>((resolve) => {
+            // Call the rotate method and then resolve the promise
+            originalRotateLog.call(fileSink, filePath, fs, path).then(() => {
+                rotationComplete = true;
+                resolve();
+            });
+        });
+
+        // Wait for rotation to complete
+        await rotationPromise;
+
+        // Write another log after rotation
+        logger.info("after-rotation");
+        await Bun.sleep(100);
+
+        await logger.wait(async () => {
+            // Verify rotation happened
+            expect(rotationComplete).toBe(true);
+
+            // Check that the original file contains the latest log
+            const contents = await fs.readFile(filePath, "utf-8");
+            expect(contents).toMatch(/after-rotation/);
+
+            // Check that backup files exist
+            const files = await fs.readdir(tempDir);
+            const backupFiles = files.filter(
+                (f) =>
+                    f.startsWith(filename) &&
+                    f !== filename &&
+                    !f.endsWith(".rotation_marker"),
+            );
+
+            // There should be at least one backup file
+            expect(backupFiles.length).toBeGreaterThan(0);
+
+            // Check that we don't exceed the maxBackups setting
+            expect(backupFiles.length).toBeLessThanOrEqual(maxBackups);
+
+            if (backupFiles.length > 0) {
+                // Check backup file content
+                const backupPath = path.join(tempDir, backupFiles[0]!);
+                const backupContents = await fs.readFile(backupPath, "utf-8");
+                expect(backupContents).toMatch(/initial content|before-rotation/);
+            }
+        });
+    });
+
+    it("should respect maxBackups setting", async () => {
+        const filename = "max-backups.log";
+        const filePath = path.join(tempDir, filename);
+
+        // create a file sink with size-based rotation and only 2 backups
+        const fileSink = new FileSink({
+            filePath,
+            rotationOptions: {
+                frequency: 10, // small size to trigger rotation easily
+                maxBackups: 2, // only keep 2 backups
+                postRotationActions: [],
+            },
+        });
+
+        // create a logger with the file sink
+        const logger = new Logger([fileSink], LogLevel.Debug);
+
+        // override the rotation check interval to make testing faster
+        // @ts-expect-error accessing private static property for testing
+        FileSink.ROTATION_CHECK_INTERVAL_MS = 0;
+
+        // generate 4 rotations (original + 3 backups, but only keep 2)
+        for (let i = 0; i < 4; i++) {
+            // reset the last rotation check time to force a check
+            // @ts-expect-error accessing private property for testing
+            fileSink.lastRotationCheck = 0;
+
+            logger.info(`log-${i}`);
+            await Bun.sleep(100);
+        }
+
+        await logger.wait(async () => {
+            // check that we have exactly 3 files (current + 2 backups)
+            const files = await fs.readdir(tempDir);
+            const logFiles = files.filter((f) => f.startsWith(filename));
+            expect(logFiles.length).toBe(3); // current file + 2 backups
+
+            // check that the current file contains the latest log
+            const contents = await fs.readFile(filePath, "utf-8");
+            expect(contents).toMatch(getLogEntryMatchRegex("log-3", {}));
+        });
+    });
+
+    it("should execute post-rotation actions", async () => {
+        const filename = "post-action.log";
+        const filePath = path.join(tempDir, filename);
+        let actionExecuted = false;
+
+        // create a file sink with a post-rotation action
+        const fileSink = new FileSink({
+            filePath,
+            rotationOptions: {
+                frequency: 10, // small size to trigger rotation easily
+                maxBackups: 1,
+                postRotationActions: [
+                    () => {
+                        actionExecuted = true;
+                    },
+                ],
+            },
+        });
+
+        // create a logger with the file sink
+        const logger = new Logger([fileSink], LogLevel.Debug);
+
+        // override the rotation check interval to make testing faster
+        // @ts-expect-error accessing private static property for testing
+        FileSink.ROTATION_CHECK_INTERVAL_MS = 0;
+
+        // reset the last rotation check time to force a check
+        // @ts-expect-error accessing private property for testing
+        fileSink.lastRotationCheck = 0;
+
+        // write logs to trigger rotation
+        logger.info("before-rotation");
+        await Bun.sleep(50);
+
+        // write another log to trigger rotation
+        logger.info("after-rotation");
+        await Bun.sleep(100);
+
+        await logger.wait(() => {
+            // verify the post-rotation action was executed
+            expect(actionExecuted).toBe(true);
+        });
+    });
+
+    it("should handle time-based rotation", async () => {
+        const filename = "time-rotation.log";
+        const filePath = path.join(tempDir, filename);
+
+        // Create a test file to ensure it exists
+        await fs.writeFile(filePath, "initial content");
+
+        // Create a marker file to simulate previous rotation
+        const markerPath = `${filePath}.rotation_marker`;
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        await fs.writeFile(markerPath, yesterday.toISOString());
+
+        // create a file sink with daily rotation
+        const fileSink = new FileSink({
+            filePath,
+            rotationOptions: {
+                frequency: "daily",
+                maxBackups: 3,
+                postRotationActions: [],
+            },
+        });
+
+        // create a logger with the file sink
+        const logger = new Logger([fileSink], LogLevel.Debug);
+
+        // override the rotation check interval to make testing faster
+        // @ts-expect-error accessing private static property for testing
+        FileSink.ROTATION_CHECK_INTERVAL_MS = 0;
+
+        // reset the last rotation check time to force a check
+        // @ts-expect-error accessing private property for testing
+        fileSink.lastRotationCheck = 0;
+
+        // Clear the file first to ensure we only have our test content
+        await fs.writeFile(filePath, "");
+
+        // write a log to trigger rotation
+        logger.info("before-rotation");
+        await Bun.sleep(100);
+
+        // Clear the file again to ensure we only have the after-rotation content
+        await fs.writeFile(filePath, "");
+
+        // write another log after rotation
+        logger.info("after-rotation");
+        await Bun.sleep(100);
+
+        await logger.wait(async () => {
+            // check that the original file exists and contains the latest log
+            const contents = await fs.readFile(filePath, "utf-8");
+            expect(contents).toMatch(getLogEntryMatchRegex("after-rotation", {}));
+
+            // check that a backup file was created
+            const files = await fs.readdir(tempDir);
+            const backupFiles = files.filter(
+                (f) =>
+                    f.startsWith(filename) &&
+                    f !== filename &&
+                    !f.endsWith(".rotation_marker"),
+            );
+            expect(backupFiles.length).toBeGreaterThan(0);
+        });
+    });
+
+    it("should handle rotation errors gracefully", async () => {
+        const filename = "error-handling.log";
+        const filePath = path.join(tempDir, filename);
+
+        // Create a test file to ensure it exists
+        await fs.writeFile(filePath, "initial content");
+
+        // Create a mock fs module with a rename function that throws
+        const mockFs = {
+            ...fs,
+            rename: async () => {
+                throw new Error("Simulated rotation error");
+            },
+        };
+
+        // Create a file sink with a special test hook
+        const fileSink = new FileSink({
+            filePath,
+            rotationOptions: {
+                frequency: 10, // small size to trigger rotation
+                maxBackups: 3,
+                postRotationActions: [],
+            },
+        });
+
+        // Monkey patch the private method for testing purposes
+        // This is a bit hacky but necessary for testing private methods
+        // @ts-expect-error accessing private method
+        const originalCheckRotation = fileSink.checkRotation;
+        // @ts-expect-error replacing private method
+        fileSink.checkRotation = async function (fullPath: string) {
+            return originalCheckRotation.call(this, fullPath, mockFs, path);
+        };
+
+        // create a logger with the file sink
+        const logger = new Logger([fileSink], LogLevel.Debug);
+
+        // override the rotation check interval to make testing faster
+        // @ts-expect-error accessing private static property for testing
+        FileSink.ROTATION_CHECK_INTERVAL_MS = 0;
+
+        // reset the last rotation check time to force a check
+        // @ts-expect-error accessing private property for testing
+        fileSink.lastRotationCheck = 0;
+
+        // Clear the file first to ensure we only have our test content
+        await fs.writeFile(filePath, "");
+
+        // write a log to trigger rotation (which will fail)
+        logger.info("test-message");
+        await Bun.sleep(100);
+
+        await logger.wait(async () => {
+            // verify logging still works despite rotation failure
+            const contents = await fs.readFile(filePath, "utf-8");
+            expect(contents).toMatch(getLogEntryMatchRegex("test-message", {}));
+        });
+    });
+});
