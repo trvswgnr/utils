@@ -49,6 +49,14 @@
         "./queue": {
             "import": "./dist/queue.js",
             "require": "./dist/queue.cjs"
+        },
+        "./list": {
+            "import": "./dist/list.js",
+            "require": "./dist/list.cjs"
+        },
+        "./mutex": {
+            "import": "./dist/mutex.js",
+            "require": "./dist/mutex.cjs"
         }
     },
     "files": [

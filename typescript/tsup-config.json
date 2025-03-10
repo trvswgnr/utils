@@ -13,7 +13,9 @@
         "either": "src/modules/either/index.ts",
         "fp": "src/modules/fp/index.ts",
         "numbers": "src/modules/numbers/index.ts",
-        "queue": "src/modules/queue/index.ts"
+        "queue": "src/modules/queue/index.ts",
+        "list": "src/modules/list/index.ts",
+        "mutex": "src/modules/mutex/index.ts"
     },
     "outDir": "dist",
     "dts": true,

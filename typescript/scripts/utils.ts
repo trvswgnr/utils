@@ -84,7 +84,7 @@ export async function writeJson<V extends JsonValue>(
     path: string,
     value: V,
 ): Promise<number> {
-    return await Bun.write(path, JSON.stringify(value, null, 4) + "\n");
+    return await Bun.write(path, `${JSON.stringify(value, null, 4)}\n`);
 }
 
 export async function writeText(path: string, text: string) {
@@ -103,7 +103,7 @@ export async function readJson<V extends JsonValue>(
 }
 
 export async function getConfirmation(message: string): Promise<boolean> {
-    const prompt = message + " (y/n): ";
+    const prompt = `${message} (y/n): `;
     process.stdout.write(prompt);
     for await (const line of console) {
         if (line === "y" || line === "yes") {

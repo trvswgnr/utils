@@ -12,7 +12,7 @@ assertInProjectRoot();
 
 const moduleName: string | undefined = process.argv[2];
 if (!moduleName) {
-    exitAfter(await exec(`bun test`));
+    exitAfter(await exec("bun test"));
 }
 
 await runModuleTests(moduleName);
