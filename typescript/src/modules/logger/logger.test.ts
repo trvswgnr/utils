@@ -1,11 +1,11 @@
-import { Logger, LogLevel, type Sink, type Metadata } from "./logger";
+import { Logger, LogLevel, type Sink, type Metadata, WorkerSink } from "./logger";
 import { describe, it, expect } from "bun:test";
 
 class TestSink implements Sink {
     public logs: string[] = [];
 
     write(level: LogLevel, message: string, metadata: Metadata): void {
-        this.logs.push(`${level}: ${message} ${JSON.stringify(metadata)}`);
+        this.logs.push(`${level.name}: ${message} ${JSON.stringify(metadata)}`);
     }
 }
 
@@ -71,7 +71,7 @@ describe("Logger", () => {
             write(level: LogLevel, message: string, metadata: Metadata): void {
                 // simulate slow processing by sleeping
                 Bun.sleepSync(this.processingDelay);
-                this.logs.push(`${level}: ${message} ${JSON.stringify(metadata)}`);
+                this.logs.push(`${level.name}: ${message} ${JSON.stringify(metadata)}`);
             }
         }
 
@@ -108,5 +108,34 @@ describe("Logger", () => {
         // this confirms logs were actually processed asynchronously
         const totalTime = performance.now() - startTime;
         expect(totalTime).toBeGreaterThanOrEqual(logCount * slowSink.processingDelay);
+    });
+
+    it("should log messages to a worker", async () => {
+        const workerScript = `
+            const logs = [];
+            self.onmessage = (event) => {
+                const { level, message, metadata } = event.data;
+                logs.push({ level: level.name, message, metadata });
+                self.postMessage({ logs });
+            };
+        `;
+        const blob = new Blob([workerScript], { type: "application/javascript" });
+        const logger = new Logger(
+            [new WorkerSink(URL.createObjectURL(blob), 1)],
+            LogLevel.Debug,
+        );
+        logger.info("test123");
+        const startTime = performance.now();
+        await new Promise((resolve) => {
+            logger.sinks[0].onmessage((event: MessageEvent<{ logs: unknown[] }>) => {
+                const { logs } = event.data;
+                expect(logs).toEqual([
+                    { level: "INFO", message: "test123", metadata: {} },
+                ]);
+                resolve(void 0);
+            });
+        });
+        const totalTime = performance.now() - startTime;
+        expect(totalTime).toBeLessThan(100);
     });
 });

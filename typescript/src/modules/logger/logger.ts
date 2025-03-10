@@ -1,29 +1,11 @@
 import { Queue } from "../queue";
 
-class _LogLevel<V extends number, N extends string> {
-    public readonly value: V;
-    public readonly name: N;
-
-    constructor(value: V, name: N) {
-        this.value = value;
-        this.name = name;
-    }
-
-    toString() {
-        return this.name;
-    }
-
-    valueOf() {
-        return this.value;
-    }
-}
-
 export const LogLevel = {
-    Debug: new _LogLevel(0, "DEBUG"),
-    Info: new _LogLevel(1, "INFO"),
-    Warn: new _LogLevel(2, "WARN"),
-    Error: new _LogLevel(3, "ERROR"),
-    Fatal: new _LogLevel(4, "FATAL"),
+    Debug: createLogLevel(0, "DEBUG"),
+    Info: createLogLevel(1, "INFO"),
+    Warn: createLogLevel(2, "WARN"),
+    Error: createLogLevel(3, "ERROR"),
+    Fatal: createLogLevel(4, "FATAL"),
 } as const;
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
@@ -49,7 +31,7 @@ export function formatLogMessage(
     metadata: Metadata,
 ): LogMessage {
     const timestamp = new Date().toISOString();
-    return `${timestamp} [${level}] ${message} ${JSON.stringify(metadata)}` as LogMessage;
+    return `${timestamp} [${level.name}] ${message} ${JSON.stringify(metadata)}` as LogMessage;
 }
 
 /**
@@ -112,7 +94,35 @@ export class FileSink implements Sink {
     }
 }
 
-export interface ILogger<Sinks extends Sink[]> {
+export class WorkerSink implements Sink {
+    private workerPool: Worker[];
+    private currentWorkerIndex: number;
+    constructor(workerUrl: string | URL, numWorkers: number) {
+        this.workerPool = Array(numWorkers)
+            .fill(null)
+            .map(() => new Worker(workerUrl));
+        this.currentWorkerIndex = 0;
+    }
+
+    write(level: LogLevel, message: string, metadata: Metadata): void {
+        // send log to worker
+        this.getNextWorker().postMessage({ level, message, metadata });
+    }
+
+    private getNextWorker(): Worker {
+        const worker = this.workerPool[this.currentWorkerIndex]!;
+        this.currentWorkerIndex = (this.currentWorkerIndex + 1) % this.workerPool.length;
+        return worker;
+    }
+
+    public onmessage<T, R>(fn: (this: Worker, ev: MessageEvent<T>) => R) {
+        for (const worker of this.workerPool) {
+            worker.onmessage = fn;
+        }
+    }
+}
+
+export interface ILogger<Sinks extends readonly Sink[]> {
     sinks: Sinks;
     minLevel: LogLevel;
     queue: Queue<QueueItem>;
@@ -131,10 +141,10 @@ interface QueueItem {
     metadata: Metadata;
 }
 
-export class Logger<Sinks extends Sink[]> implements ILogger<Sinks> {
-    sinks: Sinks;
-    minLevel: LogLevel;
-    queue: Queue<QueueItem>;
+export class Logger<const Sinks extends readonly Sink[]> implements ILogger<Sinks> {
+    readonly sinks: Sinks;
+    readonly minLevel: LogLevel;
+    readonly queue: Queue<QueueItem>;
 
     constructor(sinks: Sinks, minLevel: LogLevel) {
         this.sinks = sinks;
@@ -205,4 +215,11 @@ export class Logger<Sinks extends Sink[]> implements ILogger<Sinks> {
         }
         return await fn();
     }
+}
+
+function createLogLevel<V extends number, N extends string>(value: V, name: N) {
+    const obj = Object.create(null);
+    obj.value = value;
+    obj.name = name;
+    return obj as { readonly value: V; readonly name: N };
 }
