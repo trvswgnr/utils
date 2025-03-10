@@ -15,8 +15,7 @@
         "numbers": "src/modules/numbers/index.ts",
         "queue": "src/modules/queue/index.ts",
         "list": "src/modules/list/index.ts",
-        "mutex": "src/modules/mutex/index.ts",
-        "logger": "src/modules/logger/index.ts"
+        "mutex": "src/modules/mutex/index.ts"
     },
     "outDir": "dist",
     "dts": true,
