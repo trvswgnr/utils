@@ -907,14 +907,14 @@ describe("typed arrays and buffers", () => {
 
 // const date = new Date("2016");
 
-class MyDate extends Date {
-    constructor(...args: any[]) {
-        // @ts-expect-error
-        super(...args);
-        this[0] = "1";
-    }
-    [x: number]: string;
-}
+// class MyDate extends Date {
+//     constructor(...args: any[]) {
+//         // @ts-expect-error
+//         super(...args);
+//         this[0] = "1";
+//     }
+//     [x: number]: string;
+// }
 
 // const date2 = new MyDate("2016");
 
