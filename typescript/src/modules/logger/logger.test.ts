@@ -115,7 +115,7 @@ describe("Logger", () => {
             const logs = [];
             self.onmessage = (event) => {
                 const { level, message, metadata } = event.data;
-                logs.push({ level: level.name, message, metadata });
+                logs.push({ level, message, metadata });
                 self.postMessage({ logs });
             };
         `;
@@ -130,7 +130,7 @@ describe("Logger", () => {
             logger.sinks[0].onmessage((event: MessageEvent<{ logs: unknown[] }>) => {
                 const { logs } = event.data;
                 expect(logs).toEqual([
-                    { level: "INFO", message: "test123", metadata: {} },
+                    { level: LogLevel.Info, message: "test123", metadata: {} },
                 ]);
                 resolve(void 0);
             });

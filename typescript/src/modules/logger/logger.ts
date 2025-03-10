@@ -1,11 +1,27 @@
 import { Queue } from "../queue";
+import * as Mutex from "../mutex/mutex";
 
 export const LogLevel = {
-    Debug: createLogLevel(0, "DEBUG"),
-    Info: createLogLevel(1, "INFO"),
-    Warn: createLogLevel(2, "WARN"),
-    Error: createLogLevel(3, "ERROR"),
-    Fatal: createLogLevel(4, "FATAL"),
+    Debug: {
+        name: "DEBUG",
+        value: 0,
+    },
+    Info: {
+        name: "INFO",
+        value: 1,
+    },
+    Warn: {
+        name: "WARN",
+        value: 2,
+    },
+    Error: {
+        name: "ERROR",
+        value: 3,
+    },
+    Fatal: {
+        name: "FATAL",
+        value: 4,
+    },
 } as const;
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
@@ -29,9 +45,9 @@ export function formatLogMessage(
     level: LogLevel,
     message: string,
     metadata: Metadata,
+    timestamp?: Timestamp,
 ): LogMessage {
-    const timestamp = new Date().toISOString();
-    return `${timestamp} [${level.name}] ${message} ${JSON.stringify(metadata)}` as LogMessage;
+    return `${timestamp ?? new Date().toISOString()} [${level.name}] ${message} ${JSON.stringify(metadata)}` as LogMessage;
 }
 
 /**
@@ -122,7 +138,7 @@ export class WorkerSink implements Sink {
     }
 }
 
-export interface ILogger<Sinks extends readonly Sink[]> {
+export interface ILogger<Sinks extends Sink[]> {
     sinks: Sinks;
     minLevel: LogLevel;
     queue: Queue<QueueItem>;
@@ -141,44 +157,65 @@ interface QueueItem {
     metadata: Metadata;
 }
 
-export class Logger<const Sinks extends readonly Sink[]> implements ILogger<Sinks> {
+export class Logger<const Sinks extends Sink[]> implements ILogger<Sinks> {
     readonly sinks: Sinks;
     readonly minLevel: LogLevel;
     readonly queue: Queue<QueueItem>;
+    private processingMutex: Mutex.Instance;
 
     constructor(sinks: Sinks, minLevel: LogLevel) {
         this.sinks = sinks;
         this.minLevel = minLevel;
         this.queue = new Queue();
-        this.processQueue();
+        this.processingMutex = Mutex.create();
+        this.triggerProcessing();
     }
 
     log(level: LogLevel, message: string, metadata: Metadata): void {
         // add to queue
         this.queue.enqueue({ level, message, metadata });
+        this.triggerProcessing();
+    }
+
+    private triggerProcessing(): void {
+        // Only start processing if:
+        // 1. The mutex is not locked (no processing is happening)
+        // 2. There are items in the queue
+        if (!Mutex.isLocked(this.processingMutex) && this.queue.size > 0) {
+            const release = Mutex.acquire(this.processingMutex);
+            queueMicrotask(this.processQueue.bind(this));
+            release(this.processingMutex);
+        }
     }
 
     private async processQueue(): Promise<void> {
-        while (true) {
-            if (this.queue.size === 0) {
-                await new Promise((resolve) => setTimeout(resolve, 1));
-                continue;
-            }
+        // Acquire the mutex to indicate processing is active
+        const release = Mutex.acquire(this.processingMutex);
+        // Process all items in the queue
+        while (this.queue.size > 0) {
+            const item = this.queue.dequeue();
+            if (item) {
+                // Temporarily release the mutex while processing the item
+                // to allow other operations to proceed
+                release(this.processingMutex);
 
-            // Process all items currently in the queue
-            const currentSize = this.queue.size;
-            for (let i = 0; i < currentSize; i++) {
-                const item = this.queue.dequeue();
-                if (item) {
-                    // send log to each sink that accepts this level
-                    for (const sink of this.sinks) {
-                        if (this.shouldLog(item.level, this.minLevel)) {
-                            sink.write(item.level, item.message, item.metadata);
-                        }
+                // Process the item
+                for (const sink of this.sinks) {
+                    if (this.shouldLog(item.level, this.minLevel)) {
+                        sink.write(item.level, item.message, item.metadata);
                     }
+                }
+
+                // Re-acquire the mutex to check the queue again
+                if (this.queue.size > 0) {
+                    Mutex.acquire(this.processingMutex);
+                } else {
+                    // Queue is empty, we're done
+                    return;
                 }
             }
         }
+        release(this.processingMutex);
     }
 
     /**
@@ -209,17 +246,10 @@ export class Logger<const Sinks extends readonly Sink[]> implements ILogger<Sink
     }
 
     async wait<T>(fn: () => T): Promise<Awaited<T>> {
-        // wait for the queue to be empty
-        while (this.queue.size > 0) {
+        // Wait for the queue to be empty and processing to complete
+        while (this.queue.size > 0 || Mutex.isLocked(this.processingMutex)) {
             await new Promise((resolve) => setTimeout(resolve, 1));
         }
         return await fn();
     }
-}
-
-function createLogLevel<V extends number, N extends string>(value: V, name: N) {
-    const obj = Object.create(null);
-    obj.value = value;
-    obj.name = name;
-    return obj as { readonly value: V; readonly name: N };
 }
