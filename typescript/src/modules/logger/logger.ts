@@ -1,11 +1,41 @@
 import { Queue } from "../queue";
 
+class _LogLevel<V extends number, N extends string> {
+    public readonly value: V;
+    public readonly name: N;
+
+    constructor(value: V, name: N) {
+        this.value = value;
+        this.name = name;
+    }
+
+    /**
+     * overrides object's built-in toString method
+     *
+     * - allows log levels to be directly used in string contexts without
+     *   explicit conversion
+     */
+    toString() {
+        return this.name;
+    }
+
+    /**
+     * overrides object's built-in valueOf method
+     *
+     * - enables numeric comparison between log levels when used in numeric
+     *   contexts or with comparison operators
+     */
+    valueOf() {
+        return this.value;
+    }
+}
+
 export const LogLevel = {
-    DEBUG: 0,
-    INFO: 1,
-    WARN: 2,
-    ERROR: 3,
-    FATAL: 4,
+    Debug: new _LogLevel(0, "DEBUG"),
+    Info: new _LogLevel(1, "INFO"),
+    Warn: new _LogLevel(2, "WARN"),
+    Error: new _LogLevel(3, "ERROR"),
+    Fatal: new _LogLevel(4, "FATAL"),
 } as const;
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
@@ -23,7 +53,7 @@ export interface Metadata {
 
 export type Timestamp =
     `${number}-${number}-${number}T${number}:${number}:${number}.${number}Z`;
-export type LogMessage = `${Timestamp} [${LogLevel}] ${string} ${string}`;
+export type LogMessage = `${Timestamp} [${LogLevel["name"]}] ${string} ${string}`;
 
 export function formatLogMessage(
     level: LogLevel,
@@ -52,15 +82,15 @@ export class ConsoleSink implements Sink {
         const formattedMessage = formatLogMessage(level, message, metadata);
 
         switch (level) {
-            case LogLevel.DEBUG:
-            case LogLevel.INFO:
+            case LogLevel.Debug:
+            case LogLevel.Info:
                 console.log(formattedMessage);
                 break;
-            case LogLevel.WARN:
+            case LogLevel.Warn:
                 console.warn(formattedMessage);
                 break;
-            case LogLevel.ERROR:
-            case LogLevel.FATAL:
+            case LogLevel.Error:
+            case LogLevel.Fatal:
                 console.error(formattedMessage);
                 break;
         }
@@ -157,27 +187,27 @@ export class Logger<Sinks extends Sink[]> implements ILogger<Sinks> {
      * determine if a log should be processed based on level comparison
      */
     private shouldLog(messageLevel: LogLevel, sinkMinLevel: LogLevel): boolean {
-        return messageLevel >= sinkMinLevel;
+        return messageLevel.value >= sinkMinLevel.value;
     }
 
     debug(message: string, metadata?: Metadata): void {
-        this.log(LogLevel.DEBUG, message, metadata ?? {});
+        this.log(LogLevel.Debug, message, metadata ?? {});
     }
 
     info(message: string, metadata?: Metadata): void {
-        this.log(LogLevel.INFO, message, metadata ?? {});
+        this.log(LogLevel.Info, message, metadata ?? {});
     }
 
     warn(message: string, metadata?: Metadata): void {
-        this.log(LogLevel.WARN, message, metadata ?? {});
+        this.log(LogLevel.Warn, message, metadata ?? {});
     }
 
     error(message: string, metadata?: Metadata): void {
-        this.log(LogLevel.ERROR, message, metadata ?? {});
+        this.log(LogLevel.Error, message, metadata ?? {});
     }
 
     fatal(message: string, metadata?: Metadata): void {
-        this.log(LogLevel.FATAL, message, metadata ?? {});
+        this.log(LogLevel.Fatal, message, metadata ?? {});
     }
 
     async wait<T>(fn: () => T): Promise<Awaited<T>> {

@@ -11,7 +11,7 @@ class TestSink implements Sink {
 
 describe("Logger", () => {
     it("should log messages", async () => {
-        const logger = new Logger([new TestSink()], LogLevel.DEBUG);
+        const logger = new Logger([new TestSink()], LogLevel.Debug);
         logger.info("test123");
         await logger.wait(() => {
             expect(logger.sinks[0]?.logs).toEqual(["INFO: test123 {}"]);
@@ -19,7 +19,7 @@ describe("Logger", () => {
     });
 
     it("should log messages with metadata", async () => {
-        const logger = new Logger([new TestSink()], LogLevel.DEBUG);
+        const logger = new Logger([new TestSink()], LogLevel.Debug);
         logger.info("test123", { test: "test" });
         await logger.wait(() => {
             expect(logger.sinks[0]?.logs).toEqual(['INFO: test123 {"test":"test"}']);
@@ -29,7 +29,7 @@ describe("Logger", () => {
     it("should log messages with multiple sinks", async () => {
         const sink1 = new TestSink();
         const sink2 = new TestSink();
-        const logger = new Logger([sink1, sink2], LogLevel.DEBUG);
+        const logger = new Logger([sink1, sink2], LogLevel.Debug);
         logger.info("test123");
         await logger.wait(() => {
             expect(sink1.logs).toEqual(["INFO: test123 {}"]);
@@ -40,7 +40,7 @@ describe("Logger", () => {
     it("should log messages with different log levels", async () => {
         const sink1 = new TestSink();
         const sink2 = new TestSink();
-        const logger = new Logger([sink1, sink2], LogLevel.DEBUG);
+        const logger = new Logger([sink1, sink2], LogLevel.Debug);
         logger.info("test123");
         logger.warn("test123");
         logger.error("test123");
@@ -77,7 +77,7 @@ describe("Logger", () => {
 
         // create a logger with a slow sink (100ms delay per log)
         const slowSink = new SlowSink(100);
-        const logger = new Logger([slowSink], LogLevel.DEBUG);
+        const logger = new Logger([slowSink], LogLevel.Debug);
 
         // track execution time
         const startTime = performance.now();
