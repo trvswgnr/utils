@@ -9,22 +9,10 @@ class _LogLevel<V extends number, N extends string> {
         this.name = name;
     }
 
-    /**
-     * overrides object's built-in toString method
-     *
-     * - allows log levels to be directly used in string contexts without
-     *   explicit conversion
-     */
     toString() {
         return this.name;
     }
 
-    /**
-     * overrides object's built-in valueOf method
-     *
-     * - enables numeric comparison between log levels when used in numeric
-     *   contexts or with comparison operators
-     */
     valueOf() {
         return this.value;
     }
