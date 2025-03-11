@@ -5,7 +5,7 @@ declare var self: Worker;
 
 self.onmessage = async (event) => {
     const { type, message, filepath } = event.data;
-    console.log(`Worker received message: type=${type}, filepath=${filepath}`);
+    console.log("Worker received message:", event.data);
     if (type === "log") {
         try {
             await keepTryingToWrite(filepath, message);
@@ -25,7 +25,6 @@ async function keepTryingToWrite(filepath: string, message: string) {
         const lockfilePath = path.join(directory, "log.lock");
         // check if the lock file exists
         if (await fs.exists(lockfilePath)) {
-            console.log("lock file exists, sleeping");
             await sleep(100 * 2 ** attempts);
             attempts++;
             continue;
