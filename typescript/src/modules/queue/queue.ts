@@ -21,6 +21,8 @@ export interface QueueMetrics {
     peakSize: number;
     /** number of failed dequeues due to queue being empty */
     underflowCount: number;
+    /** number of failed enqueues due to queue being full */
+    overflowCount: number;
     /** uptime of the queue */
     uptime: number;
 }
@@ -33,8 +35,9 @@ export class Queue<T> {
     private readonly _metrics: QueueMetrics;
     private readonly _createdAt: number;
     private readonly _lock: Mutex.Instance;
+    private readonly _maxSize: number;
 
-    constructor() {
+    constructor(maxSize?: number) {
         this._items = new List<T>();
         this._createdAt = Date.now();
         this._metrics = {
@@ -42,8 +45,10 @@ export class Queue<T> {
             dequeueCount: 0,
             peakSize: 0,
             underflowCount: 0,
+            overflowCount: 0,
             uptime: 0,
         };
+        this._maxSize = maxSize ?? Number.POSITIVE_INFINITY;
         this._lock = Mutex.create();
     }
 
@@ -51,12 +56,16 @@ export class Queue<T> {
      * Adds an item to the end of the queue
      */
     enqueue(item: T): void {
-        Mutex.withLock(this._lock, () => {
-            const currentSize = this._items.length;
-            this._items.insertBack(item);
-            this._metrics.enqueueCount++;
-            this._metrics.peakSize = Math.max(this._metrics.peakSize, currentSize + 1);
-        });
+        const release = Mutex.acquire(this._lock);
+        const currentSize = this._items.length;
+        if (currentSize >= this._maxSize) {
+            this._metrics.overflowCount++;
+            throw new QueueError("Queue is full");
+        }
+        this._items.insertBack(item);
+        this._metrics.enqueueCount++;
+        this._metrics.peakSize = Math.max(this._metrics.peakSize, currentSize + 1);
+        release();
     }
 
     /**
@@ -111,6 +120,19 @@ export class Queue<T> {
             return this.dequeue();
         } catch {
             return null;
+        }
+    }
+
+    /**
+     * Safely attempts to enqueue an item
+     * @returns `true` if item was enqueued, `false` if queue is full
+     */
+    tryEnqueue(item: T): boolean {
+        try {
+            this.enqueue(item);
+            return true;
+        } catch {
+            return false;
         }
     }
 

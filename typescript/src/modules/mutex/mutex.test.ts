@@ -8,7 +8,7 @@ describe("Mutex", () => {
             const mutex = Mutex.create();
             expect(mutex, "mutex should be an instance of Mutex.Instance").toBeInstanceOf(
                 Mutex.Instance,
-            );
+            )
             expect(mutex.length, "mutex should have exactly one element").toBe(1);
             expect(mutex[0], "mutex should be initialized to unlocked state (0)").toBe(0);
         });

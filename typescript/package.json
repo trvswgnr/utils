@@ -57,6 +57,10 @@
         "./mutex": {
             "import": "./dist/mutex.js",
             "require": "./dist/mutex.cjs"
+        },
+        "./logger": {
+            "import": "./dist/logger.js",
+            "require": "./dist/logger.cjs"
         }
     },
     "files": [

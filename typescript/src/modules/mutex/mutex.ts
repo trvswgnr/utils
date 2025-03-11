@@ -58,10 +58,13 @@ export function tryAcquire(mutex: Instance): boolean {
  * @param timeoutMs optional timeout in milliseconds. if specified, the function will throw an error if the mutex cannot be acquired within this time.
  * @throws {Error} if the mutex cannot be acquired within the timeout period
  */
-export function acquire(mutex: Instance, timeoutMs?: number): typeof _release {
+export function acquire(
+    mutex: Instance,
+    timeoutMs?: number,
+): ReturnType<typeof _release> {
     // optimistic fast path - most locks are uncontended
     if (tryAcquire(mutex)) {
-        return _release;
+        return _release(mutex);
     }
 
     // contention detected - use backoff strategy
@@ -70,7 +73,7 @@ export function acquire(mutex: Instance, timeoutMs?: number): typeof _release {
 
     while (true) {
         if (tryAcquire(mutex)) {
-            return _release;
+            return _release(mutex);
         }
 
         // no timeout case - can wait indefinitely with backoff
@@ -107,10 +110,12 @@ export function acquire(mutex: Instance, timeoutMs?: number): typeof _release {
     }
 }
 
-function _release(mutex: Instance): void {
-    Atomics.store(mutex, 0, 0);
-    // wake exactly one waiting thread to prevent contention storms
-    Atomics.notify(mutex, 0, 1);
+function _release(mutex: Instance): () => void {
+    return () => {
+        Atomics.store(mutex, 0, 0);
+        // wake exactly one waiting thread to prevent contention storms
+        Atomics.notify(mutex, 0, 1);
+    };
 }
 
 /**
