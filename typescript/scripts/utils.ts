@@ -119,11 +119,11 @@ export async function getConfirmation(message: string): Promise<boolean> {
 
 export async function exec(cmd: string, quiet = false): Promise<number> {
     const p = Bun.spawn(cmd.split(" "), {
-        stdout: "pipe",
-        stderr: "pipe",
+        stdout: "inherit",
+        stderr: "inherit",
     });
-    const stdout: ReadableStream<Uint8Array> = p.stdout;
-    const stderr: ReadableStream<Uint8Array> = p.stderr;
+    const stdout: ReadableStream<Uint8Array> = p.stdout!;
+    const stderr: ReadableStream<Uint8Array> = p.stderr!;
 
     if (!quiet) {
         for (const chunk of await Bun.readableStreamToArray(stdout)) {
