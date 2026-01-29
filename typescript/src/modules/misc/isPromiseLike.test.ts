@@ -10,8 +10,7 @@ type Impl = {
   reject: (...args: unknown[]) => unknown;
 };
 
-// optional implementations - add if installed
-const optionalLibs = [
+const libs = [
   { name: "Bluebird", pkg: "bluebird" },
   { name: "Q", pkg: "q" },
   { name: "when.js", pkg: "when" },
@@ -24,7 +23,7 @@ const optionalLibs = [
   { name: "yaku", pkg: "yaku" },
 ] as const;
 
-type Lib = (typeof optionalLibs)[number];
+type Lib = (typeof libs)[number];
 
 const isOptionalLib = (lib: unknown): lib is Lib => {
   return (
@@ -40,12 +39,12 @@ const isOptionalLib = (lib: unknown): lib is Lib => {
 let libImplementations: Impl[] = [];
 
 beforeAll(async () => {
-  await $`bun add ${optionalLibs.map((lib) => lib.pkg)} --save-dev`;
+  await $`bun add ${libs.map((lib) => lib.pkg)} --save-dev`;
   libImplementations = await loadLibImplementations();
 });
 
 afterAll(async () => {
-  await $`bun remove ${optionalLibs.map((lib) => lib.pkg)} --save-dev`;
+  await $`bun remove ${libs.map((lib) => lib.pkg)} --save-dev`;
 });
 
 const defaultImplementations: Impl[] = [
@@ -70,7 +69,7 @@ const defaultImplementations: Impl[] = [
 ];
 
 const loadLibImplementations = async (): Promise<Impl[]> => {
-  const getLibImplementation = async (lib: (typeof optionalLibs)[number]) => {
+  const getLibImplementation = async (lib: (typeof libs)[number]) => {
     try {
       const P = await import(lib.pkg).then((m) => m.default ?? m.Promise);
       const impl: Impl = {
@@ -84,7 +83,7 @@ const loadLibImplementations = async (): Promise<Impl[]> => {
     }
   };
 
-  return await Promise.all(optionalLibs.map(getLibImplementation));
+  return await Promise.all(libs.map(getLibImplementation));
 };
 
 const customThenables: Impl[] = [
@@ -239,5 +238,5 @@ const runSuite = (
 };
 
 runSuite("Default", defaultImplementations);
-runSuite("Library", optionalLibs);
+runSuite("Library", libs);
 runSuite("Custom", customThenables);
